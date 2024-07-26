@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.runtime.livedata)
+    implementation(libs.androidx.appcompat)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -60,9 +61,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
-    //video library(VLC library)
 
-    implementation(libs.libvlc.all)
     implementation(libs.accompanist.permissions)
 
     //viewmodel
@@ -71,6 +70,19 @@ dependencies {
     //hilt
     implementation(libs.dagger.hilt.android.v244)
     kapt(libs.hilt.android.compiler.v244)
+
+    //glide
+    implementation(libs.landscapist.glide)
+    annotationProcessor(libs.compiler)
+
+    implementation(libs.coil.compose)
+
+
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.exoplayer.dash)
+    implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media3.session)
+
 
 }
 
