@@ -10,9 +10,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
@@ -20,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.example.soraplayer.Player.PlayerActivity
 import com.example.soraplayer.Presentation.Common.RequestMediaPermission
-import com.example.soraplayer.Presentation.MainScreen
+import com.example.soraplayer.MainScreen.MainScreen
 import com.example.soraplayer.ui.theme.SoraPlayerTheme
 import dagger.hilt.android.UnstableApi
 

@@ -71,6 +71,8 @@ dependencies {
     implementation(libs.dagger.hilt.android.v244)
     kapt(libs.hilt.android.compiler.v244)
 
+    implementation(libs.accompanist.swiperefresh.v0270)
+
     //glide
     implementation(libs.landscapist.glide)
     annotationProcessor(libs.compiler)

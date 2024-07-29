@@ -3,15 +3,16 @@ package com.example.soraplayer.Presentation.mainScreenComponents
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,7 +30,7 @@ import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
 @Composable
-fun FolderItemGridLayout(
+fun FolderItemListLayout(
     foldersList: List<FolderItem>,
     onFolderItemClick: (FolderItem) -> Unit,
     isRefreshing: Boolean,
@@ -40,23 +41,20 @@ fun FolderItemGridLayout(
         modifier = modifier
             .fillMaxSize()
     ) {
-        Spacer(modifier = Modifier.padding(10.dp))
+        Spacer(modifier = Modifier.padding(8.dp))
         SwipeRefresh(
             state = rememberSwipeRefreshState(isRefreshing),
             onRefresh = onRefresh,
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            LazyVerticalGrid(
+            LazyColumn(
                 modifier = modifier
-                    .padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalArrangement = Arrangement.Top,
-                columns = GridCells.Fixed(3),
-                ) {
-
+                    .padding(bottom = 4.dp),
+                verticalArrangement = Arrangement.Center,
+            ) {
                 items(foldersList, key = { it.name }) { folderItem ->
-                    FolderGridItem(folderItem = folderItem, onItemClick = onFolderItemClick)
+                    FolderListItem(folderItem = folderItem, onItemClick = onFolderItemClick)
                 }
 
             }
@@ -65,20 +63,21 @@ fun FolderItemGridLayout(
 }
 
 @Composable
-private fun FolderGridItem(
+private fun FolderListItem(
     folderItem: FolderItem,
     onItemClick: (FolderItem) -> Unit,
     modifier: Modifier = Modifier
 ){
-    Column(
+    Row(
         modifier = modifier
             .clickable(
                 onClick = {
                     onItemClick(folderItem)
                 }
-            ),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            )
+            .padding(start  = 12.dp , end = 12.dp, top = 4.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
     ) {
         Icon(
             painter = painterResource(id = R.drawable.file_folder),

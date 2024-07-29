@@ -1,10 +1,7 @@
 package com.example.soraplayer.Presentation.mainScreenComponents
 
-import android.annotation.SuppressLint
-import android.app.Notification
 import android.content.Context
 import android.content.Intent
-import android.service.credentials.Action
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,7 +17,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
@@ -30,8 +28,6 @@ import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AlertDialogDefaults
-import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -40,12 +36,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,23 +57,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.soraplayer.MainScreen.LayoutChange
 import com.example.soraplayer.Model.VideoItem
 import com.example.soraplayer.Utils.toHhMmSs
-import com.example.soraplayer.ui.theme.poppins
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.glide.GlideImage
 
 @Composable
-fun VideoItemGridLayout(
+fun VideoViewList(
     videoList: List<VideoItem>,
     onVideoItemClick: (VideoItem) -> Unit,
     modifier: Modifier,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
-    scrollState: LazyStaggeredGridState
+    scrollState: LazyListState
 ) {
     Column(
         modifier = Modifier
@@ -92,29 +84,27 @@ fun VideoItemGridLayout(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-                LazyVerticalStaggeredGrid(
-                    modifier = modifier,
-                    state = scrollState,
-                    horizontalArrangement = Arrangement.Center,
-                    columns = StaggeredGridCells.Fixed(2)
-                ) {
-                    items(videoList, key = { it.name }) { videoItem ->
-                        VideoGridItem(
-                            videoItem = videoItem,
-                            onItemClick = onVideoItemClick,
-                            modifier = Modifier.padding(6.dp)
-                        )
-                    }
-
+            LazyColumn(
+                modifier = modifier,
+                state = scrollState,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                items(videoList, key = { it.name }) { videoItem ->
+                    VideoListItem(
+                        videoItem = videoItem,
+                        onItemClick = onVideoItemClick,
+                        modifier = Modifier.padding(6.dp)
+                    )
                 }
+
             }
         }
     }
-
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-private fun VideoGridItem(
+private fun VideoListItem(
     videoItem: VideoItem,
     onItemClick: (VideoItem) -> Unit,
     modifier: Modifier = Modifier
@@ -126,20 +116,19 @@ private fun VideoGridItem(
     val context = LocalContext.current
     Box(
         modifier = modifier
-            .padding(2.dp)
-            .height(200.dp)
+            .fillMaxWidth()
             .clickable {
                 onItemClick(videoItem)
             }
     ){
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
         ) {
             Box(
                 modifier = Modifier
-                    .height(120.dp)
-                    .fillMaxWidth()
+                    .height(70.dp)
+                    .size(100.dp)
                     .padding(4.dp)
                     .clip(shape = MaterialTheme.shapes.small),
             ) {
@@ -159,7 +148,6 @@ private fun VideoGridItem(
                 )
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
                         .align(Alignment.BottomEnd)
                         .background(color = Color.Transparent)
                 ) {
@@ -172,6 +160,10 @@ private fun VideoGridItem(
                     }
                 }
             }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
                 Text(
                     text = videoItem.name,
                     style = MaterialTheme.typography.bodyMedium,
@@ -179,39 +171,44 @@ private fun VideoGridItem(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
-                        .padding(start = 5.dp ,top = 5.dp),
+                        .padding(start = 5.dp, top = 5.dp),
                     color = MaterialTheme.colorScheme.onBackground
                 )
 
-               Row(
-                   modifier = Modifier
-                       .fillMaxWidth()
-               ) {
-                   FlowRow(
-                       modifier = Modifier
-                           .background(color = Color.Transparent)
-                   ) {
-                       FlowRowItem(text = "${videoItem.size / 1000000} MB" , modifier = Modifier.background(color = Color.Transparent))
-                       FlowRowItem(text = "${videoItem.height} x ${videoItem.width}" , modifier = Modifier.background(color = Color.Transparent))
-                   }
-                   Spacer(modifier = Modifier.weight(1f))
-                   MoreVertMenu(
-                       onRename = {
-                           newName = videoItem.name
-                           showRenameDialog = true
-                       },
-                       onRemove = {
-                           showRemoveDialog = true
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    FlowRow(
+                        modifier = Modifier
+                            .background(color = Color.Transparent)
+                    ) {
+                        FlowRowItem(
+                            text = "${videoItem.size / 1000000} MB",
+                            modifier = Modifier.background(color = Color.Transparent)
+                        )
+                        FlowRowItem(
+                            text = "${videoItem.height} x ${videoItem.width}",
+                            modifier = Modifier.background(color = Color.Transparent)
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    MoreVertMenu(
+                        onRename = {
+                            newName = videoItem.name
+                            showRenameDialog = true
+                        },
+                        onRemove = {
+                            showRemoveDialog = true
 
-                       },
-                       onShare = {
-                           showShareDialog = true
-                       },
-                       modifier = Modifier
-                           .background(color = MaterialTheme.colorScheme.background)
-                   )
-               }
+                        },
+                        onShare = {
+                            showShareDialog = true
+                        }
+                    )
+                }
             }
+        }
         // Rename Dialog
         if (showRenameDialog) {
             AlertDialog(
@@ -235,6 +232,7 @@ private fun VideoGridItem(
                         Text(
                             "Rename",
                             color = Color(0xFF049FFD)
+
                         )
                     }
                 },
@@ -291,20 +289,14 @@ private fun VideoGridItem(
         if (showShareDialog) {
             AlertDialog(
                 onDismissRequest = { showShareDialog = false },
-                title = {
-                    Text(
-                        "Share Video",
-                    )
-                        },
-                text = { Text(
-                    "Share this video with others?",
-                ) },
+                title = { Text("Share Video") },
+                text = { Text("Share this video with others?") },
                 confirmButton = {
                     TextButton(
                         onClick = {
                             shareVideo(context, videoItem)
                             showShareDialog = false
-                        },
+                        }
                     ) {
                         Text(
                             "Share",
@@ -351,7 +343,7 @@ private fun FlowRowItem(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MoreVertMenu(
+fun MoreVertMenuList(
     onRename: () -> Unit,
     onRemove: () -> Unit,
     onShare: () -> Unit,
@@ -383,14 +375,11 @@ fun MoreVertMenu(
         onDismissRequest = { expanded = false },
         modifier = Modifier
             .focusRequester(focusRequester)
-            .background(MaterialTheme.colorScheme.background)
+            .background(color = MaterialTheme.colorScheme.background)
     ) {
         DropdownMenuItem(
             text = {
-                Text(
-                    "Rename",
-                    color = Color(0xFF049FFD)
-                )
+                Text("Rename")
             },
             onClick = {
                 onRename()
@@ -400,28 +389,21 @@ fun MoreVertMenu(
         )
         DropdownMenuItem(
             text = {
-                Text(
-                    "Remove",
-                    color = Color(0xFF049FFD)
-                )
+                Text("Remove")
             },
             onClick = {
                 expanded = false
                 onRemove()
-            },
+            }
         )
         DropdownMenuItem(
             text = {
-                Text(
-                    "Share",
-                    color = Color(0xFF049FFD)
-                )
+                Text("Share")
             },
             onClick = {
                 expanded = false
                 onShare()
-            },
-
+            }
         )
     }
 
@@ -435,4 +417,3 @@ private fun shareVideo(context: Context, videoItem: VideoItem) {
     }
     context.startActivity(Intent.createChooser(intent, "Share video via"))
 }
-

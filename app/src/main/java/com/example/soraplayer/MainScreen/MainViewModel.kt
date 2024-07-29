@@ -1,5 +1,6 @@
 package com.example.soraplayer.MainScreen
 
+import androidx.compose.runtime.State
 import com.example.soraplayer.Data.LocalMediaProvider
 import com.example.soraplayer.Model.FolderItem
 import com.example.soraplayer.MyApplication
@@ -11,9 +12,14 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.soraplayer.Model.VideoItem
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class MainViewModel(
     localMediaProvider: LocalMediaProvider
@@ -24,6 +30,8 @@ class MainViewModel(
         SharingStarted.WhileSubscribed(5000),
         emptyList()
     )
+
+
 
     private val _folderItemStateFlow = _videoItemsStateFlow.map{ videoItemsList ->
 
@@ -52,6 +60,31 @@ class MainViewModel(
 
     fun updateCurrentSelectedFolderItem(folderItem: FolderItem){
         currentSelectedFolder = folderItem
+    }
+    private val _isRefreshing = MutableStateFlow(false)
+    var isRefreshing: StateFlow<Boolean> = _isRefreshing
+
+    init {
+        loadVideos()
+        loadFolders()
+    }
+
+    private fun loadVideos() {
+
+    }
+
+    private fun loadFolders() {
+
+    }
+
+    fun refreshData() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            delay(2000)
+            loadVideos()
+            loadFolders()
+            _isRefreshing.value = false
+        }
     }
 
     companion object{

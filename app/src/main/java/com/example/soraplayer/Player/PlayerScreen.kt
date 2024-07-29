@@ -176,7 +176,7 @@ private fun UpperControls(
                     text = videoTitle,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = Color(0xFF049FFD),
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(12.dp)
                 )
@@ -186,7 +186,7 @@ private fun UpperControls(
                     Icon(
                         Icons.Rounded.ArrowBack,
                         stringResource(id = R.string.go_back),
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = Color(0xFF049FFD)
                     )
                 }
             },
@@ -221,12 +221,13 @@ private fun MiddleControls(
         )
 
         MiddleControlsItem(
-            icon = if(isPlaying) R.drawable.keyboard_double_arrow_right_24dp_e8eaed_fill0_wght400_grad0_opsz24 else R.drawable.play_arrow_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+            icon = if(isPlaying) R.drawable.pause_24dp_e8eaed_fill0_wght400_grad0_opsz24 else R.drawable.play_arrow_24dp_e8eaed_fill0_wght400_grad0_opsz24,
             contentDescription = R.string.play_pause,
             onIconClick = onPlayPauseClick,
             onSingleClick = onClick,
             onDoubleClick = onPlayPauseClick,
-            modifier = modifier.weight(1f)
+            modifier = modifier
+                .weight(1f)
         )
 
         MiddleControlsItem(
@@ -284,7 +285,7 @@ private fun BottomControls(
             Text(
                 text = "${currentTime.toHhMmSs()}-${totalTime.toHhMmSs()}",
                 modifier = Modifier.padding(horizontal = 12.dp),
-                color = MaterialTheme.colorScheme.primary,
+                color = Color(0xFF049FFD),
                 fontWeight = FontWeight.SemiBold
             )
             Spacer(modifier = Modifier.weight(1f))
@@ -293,7 +294,7 @@ private fun BottomControls(
                 Icon(
                     painterResource(id = if(resizeMode  == AspectRatioFrameLayout.RESIZE_MODE_FIT) R.drawable.aspect_ratio_24dp_e8eaed_fill0_wght400_grad0_opsz24 else R.drawable.fit_screen_24dp_e8eaed_fill0_wght400_grad0_opsz24),
                     stringResource(id = R.string.toggle_fitScreen),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = Color(0xFF049FFD)
                 )
             }
             IconButton(
@@ -303,7 +304,7 @@ private fun BottomControls(
                 Icon(
                     painterResource(id = R.drawable.screen_rotation_24dp_e8eaed_fill0_wght400_grad0_opsz24),
                     stringResource(id = R.string.rotate_screen),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint =  Color(0xFF049FFD)
                 )
             }
         }
@@ -342,7 +343,12 @@ private fun MiddleControlsItem(
             ),
         contentAlignment = Alignment.Center
     ){
-        FilledIconButton(onClick = onIconClick) {
+        FilledIconButton(
+            onClick = onIconClick,
+            colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
+                containerColor = Color(0xFF049FFD)
+            )
+        ) {
             Icon(
                 painterResource(id = icon),
                 stringResource(id = contentDescription)
@@ -362,7 +368,7 @@ fun CustomSeekBar(
     totalDuration: Long,
     modifier: Modifier = Modifier
 ){
-    val primaryColor = MaterialTheme.colorScheme.primary
+    val primaryColor = Color(0xFF049FFD)
 
     AndroidView(
         factory = { context ->
