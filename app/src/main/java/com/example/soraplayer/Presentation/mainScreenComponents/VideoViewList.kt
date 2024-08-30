@@ -168,6 +168,7 @@ private fun VideoListItem(
                     text = videoItem.name,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Start,
+                    fontSize = 12.sp,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
@@ -231,7 +232,7 @@ private fun VideoListItem(
                     ) {
                         Text(
                             "Rename",
-                            color = Color(0xFF049FFD)
+                            color = Color(0xFFD9ACF5)
 
                         )
                     }
@@ -247,7 +248,7 @@ private fun VideoListItem(
                     }
                 },
                 containerColor = Color.Transparent,
-                modifier = Modifier.background(color = MaterialTheme.colorScheme.background)
+                modifier = Modifier.background(color = Color(0xFF222831))
             )
         }
 
@@ -267,7 +268,7 @@ private fun VideoListItem(
                     ) {
                         Text(
                             "Remove",
-                            color = Color(0xFF049FFD)
+                            color = Color(0xFFD9ACF5)
                         )
                     }
                 },
@@ -282,7 +283,7 @@ private fun VideoListItem(
                     }
                 },
                 containerColor = Color.Transparent,
-                modifier = Modifier.background(color = MaterialTheme.colorScheme.background)
+                modifier = Modifier.background(color = Color(0xFF222831))
             )
         }
 
@@ -300,7 +301,7 @@ private fun VideoListItem(
                     ) {
                         Text(
                             "Share",
-                            color = Color(0xFF049FFD)
+                            color = Color(0xFFD9ACF5)
                         )
                     }
                 },
@@ -315,7 +316,7 @@ private fun VideoListItem(
                     }
                 },
                 containerColor = Color.Transparent,
-                modifier = Modifier.background(color = MaterialTheme.colorScheme.background)
+                modifier = Modifier.background(color = Color(0xFF222831))
             )
         }
     }
@@ -379,7 +380,10 @@ fun MoreVertMenuList(
     ) {
         DropdownMenuItem(
             text = {
-                Text("Rename")
+                Text(
+                    "Rename",
+                    color = Color(0xFFD9ACF5)
+                )
             },
             onClick = {
                 onRename()
@@ -389,7 +393,10 @@ fun MoreVertMenuList(
         )
         DropdownMenuItem(
             text = {
-                Text("Remove")
+                Text(
+                    "Remove",
+                    color = Color(0xFFD9ACF5)
+                )
             },
             onClick = {
                 expanded = false
@@ -398,7 +405,10 @@ fun MoreVertMenuList(
         )
         DropdownMenuItem(
             text = {
-                Text("Share")
+                Text(
+                    "Share",
+                    color = Color(0xFFD9ACF5)
+                )
             },
             onClick = {
                 expanded = false

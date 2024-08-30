@@ -79,6 +79,8 @@ fun VideoItemGridLayout(
     modifier: Modifier,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
+    onRemove: (VideoItem) -> Unit,
+    onRename: (VideoItem) -> Unit,
     scrollState: LazyStaggeredGridState
 ) {
     Column(
@@ -102,7 +104,9 @@ fun VideoItemGridLayout(
                         VideoGridItem(
                             videoItem = videoItem,
                             onItemClick = onVideoItemClick,
-                            modifier = Modifier.padding(6.dp)
+                            modifier = Modifier.padding(6.dp),
+                            onRename = onRename,
+                            onRemove = onRemove
                         )
                     }
 
@@ -116,6 +120,8 @@ fun VideoItemGridLayout(
 @Composable
 private fun VideoGridItem(
     videoItem: VideoItem,
+    onRemove: (VideoItem) -> Unit,
+    onRename: (VideoItem) -> Unit,
     onItemClick: (VideoItem) -> Unit,
     modifier: Modifier = Modifier
 ){
@@ -145,6 +151,7 @@ private fun VideoGridItem(
             ) {
                 GlideImage(
                     imageModel = { videoItem.uri },
+
                     imageOptions = ImageOptions(
                         contentScale = ContentScale.Crop,
                         alignment = Alignment.Center
@@ -177,6 +184,7 @@ private fun VideoGridItem(
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Start,
                     maxLines = 2,
+                    fontSize = 12.sp,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
                         .padding(start = 5.dp ,top = 5.dp),
@@ -208,7 +216,7 @@ private fun VideoGridItem(
                            showShareDialog = true
                        },
                        modifier = Modifier
-                           .background(color = MaterialTheme.colorScheme.background)
+                           .background(color = Color(0xFF222831))
                    )
                }
             }
@@ -228,13 +236,13 @@ private fun VideoGridItem(
                     TextButton(
                         onClick = {
                             // Handle renaming logic here
-                            Toast.makeText(context, "Renamed to: $newName", Toast.LENGTH_SHORT).show()
+                            onRename(videoItem.copy(name = newName))
                             showRenameDialog = false
                         }
                     ) {
                         Text(
                             "Rename",
-                            color = Color(0xFF049FFD)
+                            color = Color(0xFFD9ACF5)
                         )
                     }
                 },
@@ -249,7 +257,7 @@ private fun VideoGridItem(
                     }
                 },
                 containerColor = Color.Transparent,
-                modifier = Modifier.background(color = MaterialTheme.colorScheme.background)
+                modifier = Modifier.background(color = Color(0xFF222831))
             )
         }
 
@@ -263,13 +271,13 @@ private fun VideoGridItem(
                     TextButton(
                         onClick = {
                             // Handle removing logic here
-                            Toast.makeText(context, "Video removed", Toast.LENGTH_SHORT).show()
+                            onRemove(videoItem)
                             showRemoveDialog = false
                         }
                     ) {
                         Text(
                             "Remove",
-                            color = Color(0xFF049FFD)
+                            color = Color(0xFFD9ACF5)
                         )
                     }
                 },
@@ -284,7 +292,7 @@ private fun VideoGridItem(
                     }
                 },
                 containerColor = Color.Transparent,
-                modifier = Modifier.background(color = MaterialTheme.colorScheme.background)
+                modifier = Modifier.background(color = Color(0xFF222831))
             )
         }
 
@@ -308,7 +316,7 @@ private fun VideoGridItem(
                     ) {
                         Text(
                             "Share",
-                            color = Color(0xFF049FFD)
+                            color = Color(0xFFD9ACF5)
                         )
                     }
                 },
@@ -323,7 +331,7 @@ private fun VideoGridItem(
                     }
                 },
                 containerColor = Color.Transparent,
-                modifier = Modifier.background(color = MaterialTheme.colorScheme.background)
+                modifier = Modifier.background(color = Color(0xFF222831))
             )
         }
     }
@@ -383,13 +391,13 @@ fun MoreVertMenu(
         onDismissRequest = { expanded = false },
         modifier = Modifier
             .focusRequester(focusRequester)
-            .background(MaterialTheme.colorScheme.background)
+            .background(Color(0xFF222831))
     ) {
         DropdownMenuItem(
             text = {
                 Text(
                     "Rename",
-                    color = Color(0xFF049FFD)
+                    color = Color(0xFFD9ACF5)
                 )
             },
             onClick = {
@@ -402,7 +410,7 @@ fun MoreVertMenu(
             text = {
                 Text(
                     "Remove",
-                    color = Color(0xFF049FFD)
+                    color = Color(0xFFD9ACF5)
                 )
             },
             onClick = {
@@ -414,7 +422,7 @@ fun MoreVertMenu(
             text = {
                 Text(
                     "Share",
-                    color = Color(0xFF049FFD)
+                    color = Color(0xFFD9ACF5)
                 )
             },
             onClick = {

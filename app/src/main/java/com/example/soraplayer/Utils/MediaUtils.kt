@@ -1,5 +1,8 @@
 package com.example.soraplayer.Utils
 
+import android.annotation.SuppressLint
+
+@SuppressLint("DefaultLocale")
 fun Long.toHhMmSs(): String {
     val seconds = (this / 1000).toInt()
     val hours = seconds / 3600

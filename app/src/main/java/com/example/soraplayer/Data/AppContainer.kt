@@ -6,4 +6,7 @@ class AppContainer(private val context: Application) {
     val localMediaProvider by lazy {
         LocalMediaProvider(applicationContext = context)
     }
+    val localMusicProvider by lazy {
+        LocalMusicProvider(applicationContext = context)
+    }
 }

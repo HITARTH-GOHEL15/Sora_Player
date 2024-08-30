@@ -11,14 +11,15 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
+import com.example.soraplayer.MainScreen.MainScreen
+import com.example.soraplayer.MusicPlayer.MusicPlayerActivity
 import com.example.soraplayer.Player.PlayerActivity
 import com.example.soraplayer.Presentation.Common.RequestMediaPermission
-import com.example.soraplayer.MainScreen.MainScreen
 import com.example.soraplayer.ui.theme.SoraPlayerTheme
 import dagger.hilt.android.UnstableApi
 
@@ -47,7 +48,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier
                         .fillMaxSize(),
                     tonalElevation = 8.dp,
-                    color = MaterialTheme.colorScheme.background
+                    color  = Color(0xFF222831)
                 ) {
                     val playerActivityLauncher = rememberLauncherForActivityResult(
                         contract = ActivityResultContracts.StartActivityForResult(),
@@ -61,6 +62,13 @@ class MainActivity : ComponentActivity() {
                                         data = videoItem.uri
                                     }
                                 playerActivityLauncher.launch(playerIntent)
+                            },
+                            onMusicItemClick = { musicItem ->
+                                val playerIntent =
+                                    Intent(this@MainActivity, MusicPlayerActivity::class.java).apply {
+                                        data = musicItem.uri
+                                    }
+                                playerActivityLauncher.launch(playerIntent)
                             }
                         )
                     }
@@ -70,6 +78,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+
 
 
 

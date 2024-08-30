@@ -38,7 +38,10 @@ fun RequestMediaPermission(
             val readVideoPermissionState =
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     rememberPermissionState(
-                        android.Manifest.permission.READ_MEDIA_VIDEO
+                        android.Manifest.permission.READ_MEDIA_VIDEO,
+                    )
+                    rememberPermissionState(
+                        android.Manifest.permission.READ_MEDIA_AUDIO
                     )
                 } else {
                     rememberPermissionState(

@@ -2,6 +2,7 @@ package com.example.soraplayer.Data
 
 import android.app.Application
 import android.content.ContentUris
+import android.content.ContentValues
 import android.content.Context
 import android.database.ContentObserver
 import android.net.Uri
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import java.io.File
+import java.io.IOException
 
 class LocalMediaProvider(
     private val applicationContext: Application
@@ -107,6 +109,9 @@ class LocalMediaProvider(
         }
         return videoItems.filter { File(it.absolutePath).exists() }
     }
+
+
+
 
     companion object {
 

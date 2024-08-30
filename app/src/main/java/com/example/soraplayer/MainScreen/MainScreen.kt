@@ -63,6 +63,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -72,9 +73,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.soraplayer.Model.MusicItem
 import com.example.soraplayer.Model.VideoItem
 import com.example.soraplayer.Presentation.mainScreenComponents.FolderItemGridLayout
 import com.example.soraplayer.Presentation.mainScreenComponents.FolderItemListLayout
+import com.example.soraplayer.Presentation.mainScreenComponents.MusicList
 import com.example.soraplayer.Presentation.mainScreenComponents.VideoItemGridLayout
 import com.example.soraplayer.Presentation.mainScreenComponents.VideoViewList
 import com.example.soraplayer.R
@@ -87,7 +90,8 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    onVideoItemClick: (VideoItem) -> Unit
+    onVideoItemClick: (VideoItem) -> Unit,
+    onMusicItemClick: (MusicItem) -> Unit
 ){
     val layoutDirection = LocalLayoutDirection.current
 
@@ -99,6 +103,7 @@ fun MainScreen(
 
     val videosViewStateFlow by mainViewModel.videoItemsStateFlow.collectAsState()
     val foldersViewStateFlow by mainViewModel.folderItemStateFlow.collectAsState()
+    val musicViewStateFlow by mainViewModel.musicItemsStateFlow.collectAsState()
 
     var sortOrder by rememberSaveable {
         mutableStateOf(SortOrder.Name)
@@ -175,29 +180,36 @@ fun MainScreen(
                             placeholder = {
                                 Text(
                                     text = "Search",
-                                    fontFamily = poppins
+                                    fontFamily = poppins,
+                                    color =  Color(0xFFEEEEEE)
                                 )
                                           },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             colors = TextFieldDefaults.colors(
-                                focusedIndicatorColor = Color(0xFF049FFD),
+                                focusedIndicatorColor = Color(0xFF892CDC),
                                 unfocusedIndicatorColor = Color.Transparent,
-                                cursorColor = Color(0xFF049FFD),
-                            )
+                                cursorColor = Color(0xFF892CDC),
+                            ),
+                            textStyle = MaterialTheme.typography.bodyMedium,
                         )
                     },
                     navigationIcon = {
                         IconButton(onClick = {isSearching = false}) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
+                                contentDescription = "Back",
+                                tint = Color(0xFFD9ACF5)
                             )
                         }
                     },
                     actions = {
                         IconButton(onClick = { searchQuery = ""}) {
-                            Icon(Icons.Default.Close , contentDescription = "Clear")
+                            Icon(
+                                Icons.Default.Close ,
+                                contentDescription = "Clear",
+                                tint = Color(0xFFD9ACF5)
+                            )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -212,7 +224,7 @@ fun MainScreen(
                                 text = "Sora",
                                 fontFamily = poppins,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF049FFD),
+                                color = Color(0xFF892CDC),
                                 style = MaterialTheme.typography.titleLarge
                             )
                             Text(
@@ -230,7 +242,7 @@ fun MainScreen(
                             Icon(
                                 imageVector = Icons.Filled.Search,
                                 contentDescription = "Search",
-                                tint = MaterialTheme.colorScheme.onBackground,
+                                tint = Color(0xFFD9ACF5),
                             )
                         }
 
@@ -264,65 +276,93 @@ fun MainScreen(
         bottomBar = {
             NavigationBar(
                 tonalElevation = 12.dp,
-                containerColor = Color.Transparent
+                containerColor = Color.Transparent,
+                modifier = Modifier
+                    .border(0.2.dp , color = Color(0xFF892CDC))
             ){
                 NavigationBarItem(
                     colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = Color(0xFF049FFD)
+                        indicatorColor = Color(0xFF222831)
                     ),
                     selected = bottomNavigationScreen == BottomNavigationScreens.VideosView,
-                    label = { Text(text = stringResource(id = R.string.videos_layout)) },
+                    label = { Text(
+                        text = stringResource(id = R.string.videos_layout),
+                        fontFamily = poppins,
+                        fontWeight = FontWeight.Bold,
+                        color =  Color(0xFFEEEEEE)
+                    ) },
                     onClick = {
                         bottomNavigationScreen = BottomNavigationScreens.VideosView
                     },
                     icon = {
                         Icon(
                             painter = painterResource(id = R.drawable.video_library_24dp_e8eaed_fill0_wght400_grad0_opsz24),
-                            contentDescription = stringResource(id = R.string.videos_layout)
+                            contentDescription = stringResource(id = R.string.videos_layout),
+                            tint = Color(0xFFD9ACF5)
                         )
                     }
                 )
                 NavigationBarItem(
                     colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = Color(0xFF049FFD)
+                        indicatorColor = Color(0xFF222831)
                     ),
                     selected = bottomNavigationScreen == BottomNavigationScreens.FoldersView,
-                    label = { Text(text = stringResource(id = R.string.folders_layout)) },
+                    label = { Text(
+                        text = stringResource(id = R.string.folders_layout),
+                        fontFamily = poppins,
+                        fontWeight = FontWeight.Bold,
+                        color =  Color(0xFFEEEEEE)
+                    ) },
                     onClick = {
                         bottomNavigationScreen = BottomNavigationScreens.FoldersView
                     },
                     icon = {
                         Icon(
                             painter = painterResource(id = R.drawable.perm_media_24dp_e8eaed_fill0_wght400_grad0_opsz24),
-                            contentDescription = stringResource(id = R.string.folders_layout)
+                            contentDescription = stringResource(id = R.string.folders_layout),
+                            tint = Color(0xFFD9ACF5)
                         )
                     }
                 )
                 NavigationBarItem(
                     colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        indicatorColor = Color(0xFF892CDC)
                     ),
-                    selected = false,
-                    label = { Text(text = "Music") },
-                    onClick = { /*TODO*/ },
+                    selected = bottomNavigationScreen == BottomNavigationScreens.MusicView,
+                    label = { Text(
+                        text = "Music",
+                        fontFamily = poppins,
+                        fontWeight = FontWeight.Bold,
+                        color =  Color(0xFFEEEEEE)
+                    ) },
+                    onClick = {
+                        bottomNavigationScreen = BottomNavigationScreens.MusicView
+                    },
                     icon = {
                         Icon(
                             painter = painterResource(id = R.drawable.music_note_24dp_e8eaed_fill0_wght400_grad0_opsz24),
-                            contentDescription = "Music"
+                            contentDescription = "Music",
+                            tint = Color(0xFFD9ACF5)
                         )
                     }
                 )
                 NavigationBarItem(
                     colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        indicatorColor = Color(0xFF892CDC)
                     ),
                     selected = false,
-                    label = { Text(text = "Me") },
+                    label = { Text(
+                        text = "Me",
+                        fontFamily = poppins,
+                        fontWeight = FontWeight.Bold,
+                        color =  Color(0xFFEEEEEE)
+                    ) },
                     onClick = { /*TODO*/ },
                     icon = {
                         Icon(
                             painter = painterResource(id = R.drawable.person_24dp_e8eaed_fill0_wght400_grad0_opsz24),
-                            contentDescription = "Me"
+                            contentDescription = "Me",
+                            tint = Color(0xFFD9ACF5)
                         )
                     }
                 )
@@ -337,10 +377,11 @@ fun MainScreen(
                     BottomNavigationScreens.VideosView -> slideInHorizontally(){-it}.togetherWith(slideOutHorizontally(){it})
 
                     BottomNavigationScreens.FoldersView -> slideInHorizontally(){it}.togetherWith(slideOutHorizontally(){-it})
+                    BottomNavigationScreens.MusicView ->  slideInHorizontally(){it}.togetherWith(slideOutHorizontally(){-it})
                 }
             },
             modifier = Modifier
-                .background(color = MaterialTheme.colorScheme.background)
+                .background(color = Color(0xFF222831))
         ) { navScreen ->
             LaunchedEffect(sortOrder, sortDirection, bottomNavigationScreen) {
                 if (isGridLayout) {
@@ -360,8 +401,10 @@ fun MainScreen(
                                 scrollState = gridState,
                                 isRefreshing = isRefreshing,
                                 onRefresh = { mainViewModel.refreshData() },
+                                onRename = {  videoItem -> mainViewModel.renameVideo(videoItem.id, videoItem.name) },
+                                onRemove = { videoItem -> mainViewModel.removeVideo(videoItem.id) },
                                 modifier = Modifier
-                                    .background(color = MaterialTheme.colorScheme.background)
+                                    .background(color = Color(0xFF222831))
                                     .padding(top = 70.dp, bottom = 120.dp),
                             )
                         } else {
@@ -371,8 +414,8 @@ fun MainScreen(
                                 scrollState = ListState,
                                 isRefreshing = isRefreshing,
                                 onRefresh = { mainViewModel.refreshData() },
-                                modifier = Modifier.
-                                    background(color = MaterialTheme.colorScheme.background)
+                                modifier = Modifier
+                                    .background(color = Color(0xFF222831))
                                     .padding(top = 70.dp, bottom = 120.dp),
                             )
                         }
@@ -389,7 +432,7 @@ fun MainScreen(
                             targetState = foldersVideosNavigation, label = "",
                             animationSpec = tween(300, easing = LinearEasing),
                             modifier = Modifier
-                                .background(color = MaterialTheme.colorScheme.background)
+                                .background(color = Color(0xFF222831))
                         ) { foldersAndVideosNav ->
 
                             when (foldersAndVideosNav) {
@@ -407,7 +450,7 @@ fun MainScreen(
                                             isRefreshing = isRefreshing,
                                             onRefresh = { mainViewModel.refreshData() },
                                             modifier = Modifier
-                                                .background(color = MaterialTheme.colorScheme.background)
+                                                .background(color = Color(0xFF222831))
                                                 .padding(top = 50.dp, bottom = 120.dp)
                                         )
                                     } else {
@@ -421,8 +464,8 @@ fun MainScreen(
                                             isRefreshing = isRefreshing,
                                             onRefresh = { mainViewModel.refreshData() },
                                             modifier = Modifier
-                                                .background(color = MaterialTheme.colorScheme.background)
-                                                .padding(top = 50.dp, bottom = 120.dp)
+                                                .background(color = Color(0xFF222831))
+                                                .padding(top = 50.dp, bottom = 50.dp)
                                         )
                                     }
 
@@ -441,9 +484,11 @@ fun MainScreen(
                                             scrollState = gridState,
                                             isRefreshing = isRefreshing,
                                             onRefresh = { mainViewModel.refreshData() },
+                                            onRename = { videoItem -> mainViewModel.renameVideo(videoItem.id, videoItem.name)  },
+                                            onRemove = { videoItem -> mainViewModel.removeVideo(videoItem.id) },
                                             modifier = Modifier
-                                                .padding(top = 70.dp,bottom = 120.dp)
-                                                .background(color = MaterialTheme.colorScheme.background)
+                                                .padding(top = 70.dp, bottom = 120.dp)
+                                                .background(color = Color(0xFF222831))
                                         )
                                     } else {
                                         VideoViewList(
@@ -453,13 +498,21 @@ fun MainScreen(
                                             isRefreshing = isRefreshing,
                                             onRefresh = { mainViewModel.refreshData() },
                                             modifier = Modifier
-                                                .padding(top = 70.dp,bottom = 120.dp)
-                                                .background(color = MaterialTheme.colorScheme.background)
+                                                .padding(top = 70.dp, bottom = 120.dp)
+                                                .background(color = Color(0xFF222831))
                                         )
                                     }
                                 }
                             }
+
                         }
+                    }
+
+                    BottomNavigationScreens.MusicView -> {
+                       MusicList(
+                           musicTracks = musicViewStateFlow,
+                           onItemClick = onMusicItemClick
+                       )
                     }
                 }
             }
@@ -486,7 +539,7 @@ private fun SortAndLayoutDropdownMenu(
                Icon(
                    painter = painterResource(R.drawable.sort_24dp_e8eaed_fill0_wght400_grad0_opsz24),
                    contentDescription = "Sort",
-                   tint = MaterialTheme.colorScheme.onBackground,
+                   tint = Color(0xFFD9ACF5),
                )
            }
            DropdownMenu(
@@ -494,12 +547,13 @@ private fun SortAndLayoutDropdownMenu(
                onDismissRequest = {expanded = false},
                modifier = Modifier
                    .focusRequester(focusRequester)
-                   .background(color = MaterialTheme.colorScheme.background)
+                   .background(color = Color(0xFF222831))
            ) {
                DropdownMenuItem(
                    text = {
                        Text(
-                           text = "Sort by Name"
+                           text = "Sort by Name",
+                           color = Color(0xFFD9ACF5)
                        )
                    },
                    onClick = {
@@ -510,7 +564,8 @@ private fun SortAndLayoutDropdownMenu(
                DropdownMenuItem(
                    text = {
                        Text(
-                           text = "Sort by Date"
+                           text = "Sort by Date",
+                           color = Color(0xFFD9ACF5)
                        )
                    },
                    onClick = {
@@ -521,7 +576,8 @@ private fun SortAndLayoutDropdownMenu(
                DropdownMenuItem(
                    text = {
                        Text(
-                           text = "Sort by Size"
+                           text = "Sort by Size",
+                           color = Color(0xFFD9ACF5)
                        )
                    },
                    onClick = {
@@ -535,7 +591,8 @@ private fun SortAndLayoutDropdownMenu(
                    },
                    text = {
                        Text(
-                           "Ascending"
+                           "Ascending",
+                           color = Color(0xFFD9ACF5)
                        )
                    }
                )
@@ -545,7 +602,8 @@ private fun SortAndLayoutDropdownMenu(
                    },
                    text = {
                        Text(
-                           "Descending"
+                           "Descending",
+                           color = Color(0xFFD9ACF5)
                        )
                    }
                )
@@ -571,7 +629,7 @@ fun LayoutChange(
         Icon(
             painter = painterResource(R.drawable.view_list_24dp_e8eaed_fill0_wght400_grad0_opsz24),
             contentDescription = "Layout",
-            tint = MaterialTheme.colorScheme.onBackground,
+            tint = Color(0xFFD9ACF5),
         )
     }
     DropdownMenu(
@@ -579,7 +637,7 @@ fun LayoutChange(
         onDismissRequest = { expanded = false },
         modifier = Modifier
             .focusRequester(focusRequester)
-            .background(color = MaterialTheme.colorScheme.background)
+            .background(color = Color(0xFF222831))
     ) {
         DropdownMenuItem(
             text = {
@@ -588,7 +646,8 @@ fun LayoutChange(
                         "Switch to List View"
                     } else {
                         "Switch to Grid View"
-                    }
+                    },
+                    color = Color(0xFFD9ACF5)
                 )
             },
             onClick = {
@@ -606,7 +665,8 @@ fun LayoutChange(
 
 private enum class BottomNavigationScreens{
     VideosView,
-    FoldersView
+    FoldersView,
+    MusicView
 }
 
 private enum class FoldersVideosNavigation {

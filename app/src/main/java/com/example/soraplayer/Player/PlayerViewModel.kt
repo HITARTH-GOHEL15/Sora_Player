@@ -1,5 +1,7 @@
 package com.example.soraplayer.Player
 
+import android.annotation.SuppressLint
+import android.content.Context
 import android.content.pm.ActivityInfo
 import android.media.audiofx.LoudnessEnhancer
 import android.net.Uri
@@ -13,7 +15,10 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.ui.AspectRatioFrameLayout
 import com.example.soraplayer.Data.LocalMediaProvider
 import com.example.soraplayer.Model.VideoItem
@@ -24,6 +29,7 @@ import kotlinx.coroutines.flow.update
 
 @UnstableApi
 class PlayerViewModel(
+    @SuppressLint("StaticFieldLeak") private val context: Context,
     val player: ExoPlayer,
     private val mediaSession: androidx.media3.session.MediaSession,
     private val loudnessEnhancer: LoudnessEnhancer,
@@ -143,9 +149,22 @@ class PlayerViewModel(
             initializer {
 
                 val application = (this[APPLICATION_KEY] as MyApplication)
+                val context = application.applicationContext
 
-                val player = ExoPlayer
-                    .Builder(application)
+                val renderersFactory = DefaultRenderersFactory(context)
+                    .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
+
+                val loadControl = DefaultLoadControl.Builder()
+                    .setBufferDurationsMs(32_000, 64_000, 1_000, 5_000)
+                    .build()
+
+                val trackSelector = DefaultTrackSelector(context).apply {
+                    parameters = buildUponParameters().setMaxVideoSizeSd().build()
+                }
+
+                val player = ExoPlayer.Builder(context, renderersFactory)
+                    .setTrackSelector(trackSelector)
+                    .setLoadControl(loadControl)
                     .setAudioAttributes(
                         AudioAttributes.Builder()
                             .setUsage(C.USAGE_MEDIA)
@@ -167,7 +186,7 @@ class PlayerViewModel(
 
                     override fun onAudioSessionIdChanged(audioSessionId: Int) {
                         super.onAudioSessionIdChanged(audioSessionId)
-                        loudnessEnhancer?.release()
+                        loudnessEnhancer.release()
 
                         try {
                             loudnessEnhancer = LoudnessEnhancer(audioSessionId)
@@ -180,9 +199,10 @@ class PlayerViewModel(
                 player.addListener(listener)
 
                 PlayerViewModel(
+                    context = context,
                     player = player,
                     mediaSession = mediaSession,
-                    loudnessEnhancer = loudnessEnhancer!!,
+                    loudnessEnhancer = loudnessEnhancer,
                     listener = listener,
                     localMediaProvider = application.container.localMediaProvider
                 )

@@ -4,8 +4,9 @@
 
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"
         tools:ignore="SelectedPhotoAccess" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET"/>
 
 
 
@@ -46,6 +47,18 @@
                 <data android:scheme="content" />
 
                 <data android:mimeType = "video/*" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".MusicPlayer.MusicPlayerActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+                <data android:mimeType = "audio/*" />
             </intent-filter>
         </activity>
     </application>

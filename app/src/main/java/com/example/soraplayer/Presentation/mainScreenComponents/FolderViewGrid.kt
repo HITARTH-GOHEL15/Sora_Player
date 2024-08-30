@@ -23,6 +23,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.soraplayer.Model.FolderItem
 import com.example.soraplayer.R
 import com.google.accompanist.swiperefresh.SwipeRefresh
@@ -82,13 +83,14 @@ private fun FolderGridItem(
     ) {
         Icon(
             painter = painterResource(id = R.drawable.file_folder),
-            tint = Color(0xFF049FFD),
+            tint = Color(0xFF892CDC),
             contentDescription = folderItem.name,
             modifier = Modifier.size(50.dp)
         )
         Spacer(modifier = Modifier.padding(4.dp))
         Text(
             text = folderItem.name,
+            fontSize = 12.sp,
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Start,
             maxLines = 2,
