@@ -32,6 +32,8 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -175,7 +177,7 @@ private fun VideoGridItem(
                             .padding(4.dp)
                             .align(Alignment.BottomEnd)
                     ) {
-                        FlowRowItem(text = videoItem.duration.toHhMmSs())
+                        FlowRowItem2(text = videoItem.duration.toHhMmSs())
                     }
                 }
             }
@@ -188,7 +190,7 @@ private fun VideoGridItem(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
                         .padding(start = 5.dp ,top = 5.dp),
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = Color.White
                 )
 
                Row(
@@ -224,7 +226,10 @@ private fun VideoGridItem(
         if (showRenameDialog) {
             AlertDialog(
                 onDismissRequest = { showRenameDialog = false },
-                title = { Text("Rename Video") },
+                title = { Text(
+                    "Rename Video",
+                    color = Color(0xFFD9ACF5)
+                ) },
                 text = {
                     TextField(
                         value = newName,
@@ -252,7 +257,7 @@ private fun VideoGridItem(
                     ) {
                         Text(
                             "Cancel",
-                            color = MaterialTheme.colorScheme.onBackground
+                            color = Color.White
                         )
                     }
                 },
@@ -265,8 +270,14 @@ private fun VideoGridItem(
         if (showRemoveDialog) {
             AlertDialog(
                 onDismissRequest = { showRemoveDialog = false },
-                title = { Text("Remove Video") },
-                text = { Text("Are you sure you want to remove this video?") },
+                title = { Text(
+                    "Remove Video",
+                    color = Color(0xFFD9ACF5)
+                ) },
+                text = { Text(
+                    "Are you sure you want to remove this video?",
+                    color = Color.White
+                ) },
                 confirmButton = {
                     TextButton(
                         onClick = {
@@ -287,7 +298,7 @@ private fun VideoGridItem(
                     ) {
                         Text(
                             "Cancel",
-                            color = MaterialTheme.colorScheme.onBackground
+                            color = Color.White
                         )
                     }
                 },
@@ -302,10 +313,12 @@ private fun VideoGridItem(
                 title = {
                     Text(
                         "Share Video",
+                        color = Color(0xFFD9ACF5)
                     )
                         },
                 text = { Text(
                     "Share this video with others?",
+                    color = Color.White
                 ) },
                 confirmButton = {
                     TextButton(
@@ -326,7 +339,7 @@ private fun VideoGridItem(
                     ) {
                         Text(
                             "Cancel",
-                            color = MaterialTheme.colorScheme.onBackground
+                            color = Color.White
                         )
                     }
                 },
@@ -347,13 +360,41 @@ private fun FlowRowItem(
             .padding(4.dp)
             .background(color = Color.Transparent),
         shape = CutCornerShape(2.dp),
+         CardDefaults.cardColors(
+            Color.Transparent
+        )
     ){
         Text(
             text,
             fontSize = 10.sp,
-            color = MaterialTheme.colorScheme.onBackground,
+            color = Color.White,
             modifier = Modifier.padding(1.dp)
         )
+
+    }
+}
+
+@Composable
+private fun FlowRowItem2(
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    ElevatedCard(
+        modifier = modifier
+            .padding(4.dp)
+            .background(color = Color.Transparent),
+        shape = CutCornerShape(2.dp),
+        CardDefaults.cardColors(
+            Color.Black
+        )
+    ){
+        Text(
+            text,
+            fontSize = 10.sp,
+            color = Color.White,
+            modifier = Modifier.padding(1.dp)
+        )
+
     }
 }
 
@@ -378,7 +419,7 @@ fun MoreVertMenu(
         Icon(
             imageVector = Icons.Filled.MoreVert,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onBackground,
+            tint = Color.White,
         )
     }
 

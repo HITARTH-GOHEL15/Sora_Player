@@ -1,6 +1,7 @@
 package com.example.soraplayer.Player
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -30,12 +31,10 @@ class PlayerActivity: ComponentActivity() {
 
         requestedOrientation = playerViewModel.playerState.value.orientation
 
-        val videoUri = intent.data
+        handleIntent(intent)
 
-        if (videoUri != null) {
-            Log.d(TAG, "Intent Uri is not null")
-            playerViewModel.onIntent(videoUri)
-        }
+
+
 
         setContent {
             SoraPlayerTheme(
@@ -58,14 +57,68 @@ class PlayerActivity: ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        handleIntent(intent)
 
-        val videoUri = intent?.data
+    }
 
-        if (videoUri != null) {
-            Log.d(TAG, "OnNewIntent Uri is not null")
-            playerViewModel.onNewIntent(videoUri)
+    private fun handleIntent(intent: Intent?) {
+        val intentUri = intent?.data
+
+        // Handle deep link
+        if (intentUri != null) {
+            handleDeepLink(intentUri)
+        }
+
+        // Handle video sharing (URL or file)
+        if (intent?.action == Intent.ACTION_SEND) {
+            handleShareIntent(intent)
         }
     }
+
+    private fun handleDeepLink(uri: Uri?){
+        val slug = uri?.getQueryParameter("slug")
+        val timestamp = uri?.getQueryParameter("timestamp")?.toIntOrNull()
+
+        if (uri != null) {
+            Log.d(TAG , "handle URI deep link")
+            playerViewModel.onIntent(uri)
+        } else if(slug != null) {
+           playerViewModel.onIntentFromDeepLink(slug, timestamp)
+        }
+
+    }
+
+    private fun handleShareIntent(intent: Intent?) {
+        when (intent?.action) {
+            Intent.ACTION_SEND -> {
+                val type = intent.type
+                if (type == "text/plain") {
+                    // For internet video URLs shared as text
+                    val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
+                    sharedText?.let {
+                        val uri = Uri.parse(it)
+                        playerViewModel.onIntent(uri)
+                    }
+                } else if (type?.startsWith("video/") == true) {
+                    // For local video files
+                    val uri = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+                    uri?.let {
+                        playerViewModel.onIntent(it)
+                    }
+                }
+            }
+            Intent.ACTION_SEND_MULTIPLE -> {
+                val uriList = intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
+                uriList?.let {
+                    for (uri in it) {
+                        playerViewModel.onIntent(uri)
+                        break // only handle the first video
+                    }
+                }
+            }
+        }
+    }
+
 
     override fun onPause() {
         playerViewModel.playPauseOnActivityLifeCycleEvents(shouldPause = true)

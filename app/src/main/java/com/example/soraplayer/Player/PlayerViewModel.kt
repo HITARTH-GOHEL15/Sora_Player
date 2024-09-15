@@ -65,13 +65,14 @@ class PlayerViewModel(
     }
 
     private fun setMediaItem(uri: Uri) {
-        player.apply{
-            addMediaItem(MediaItem.fromUri(uri))
+        player.apply {
+            clearMediaItems()
+            addMediaItem(MediaItem.fromUri(uri)) // Load the video from the given URI
             playWhenReady = true
-            if(isPlaying){
-                _playerState.update {
-                    it.copy(isPlaying = true)
-                }
+            prepare()
+
+            _playerState.update {
+                it.copy(isPlaying = true) // Update the state to indicate the player is playing
             }
         }
     }
@@ -127,9 +128,16 @@ class PlayerViewModel(
         }
     }
 
-    fun onIntent(uri: Uri){
-        localMediaProvider.getVideoItemFromContentUri(uri)?.let{
-            updateCurrentVideoItem(it)
+    fun onIntent(uri: Uri) {
+        // Check if the URI is a web URL (http/https) or a local file (content/file)
+        if (uri.scheme == "http" || uri.scheme == "https") {
+            // It's an internet URL, set the media item directly
+            setMediaItem(uri)
+        } else {
+            // It's a local video file, handle it with the localMediaProvider (already in your code)
+            localMediaProvider.getVideoItemFromContentUri(uri)?.let {
+                updateCurrentVideoItem(it)
+            }
         }
     }
 
@@ -139,6 +147,19 @@ class PlayerViewModel(
             updateCurrentVideoItem(it)
         }
     }
+
+    fun onIntentFromDeepLink(slug: String, timestamp: Int?) {
+        val mediaUri = Uri.parse("https://www.example.com/video/$slug")
+        setMediaItem(mediaUri)
+        timestamp?.let {
+            player.seekTo(it * 1000L)
+        }
+
+    }
+
+
+
+
 
     companion object{
 

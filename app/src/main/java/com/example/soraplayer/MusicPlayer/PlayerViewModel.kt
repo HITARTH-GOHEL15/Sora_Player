@@ -1,6 +1,7 @@
 package com.example.soraplayer.MusicPlayer
 
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -64,13 +65,13 @@ class MusicPlayerViewModel(
 
     private fun setMediaItem(uri: Uri) {
         player.apply {
-            setMediaItem(MediaItem.fromUri(uri))
+            clearMediaItems()
+            addMediaItem(MediaItem.fromUri(uri))  // Load the media item from the given URI
             playWhenReady = true
-            if (isPlaying) {
-                _musicPlayerState.update { state ->
-                    state.copy(isPlaying = true)
-                }
-            }
+            prepare()
+        }
+        _musicPlayerState.update { state ->
+            state.copy(isPlaying = true)
         }
     }
 
@@ -78,18 +79,22 @@ class MusicPlayerViewModel(
         if (player.isPlaying) {
             player.pause()
             _musicPlayerState.update { state -> state.copy(isPlaying = false) }
+            sendMusicServiceCommand(MusicService.ACTION_PAUSE)
         } else {
             player.play()
             _musicPlayerState.update { state -> state.copy(isPlaying = true) }
+            sendMusicServiceCommand(MusicService.ACTION_PLAY)
         }
     }
 
     fun onSeekForwardClick() {
         player.seekForward()
+        sendMusicServiceCommand(MusicService.ACTION_SEEK_FORWARD)
     }
 
     fun onSeekBackwardClick() {
         player.seekBack()
+        sendMusicServiceCommand(MusicService.ACTION_SEEK_BACKWARD)
     }
 
     fun playPauseOnActivityLifeCycleEvents(shouldPause: Boolean) {
@@ -103,21 +108,37 @@ class MusicPlayerViewModel(
     }
 
     fun onIntent(uri: Uri) {
-        localMusicProvider.getMusicItemFromUri(uri)?.let {
-            updateCurrentTrack(it)
+        // Check if it's a local music file or a URL
+        if (uri.scheme == "http" || uri.scheme == "https") {
+            // It's an internet URL, directly set the media item
+            setMediaItem(uri)
+        } else {
+            // Try to fetch a local music item from the URI
+            localMusicProvider.getMusicItemFromUri(uri)?.let {
+                updateCurrentTrack(it)
+            } ?: run {
+                // If it's not in the local library, try to play it directly
+                setMediaItem(uri)
+            }
         }
     }
 
     fun onNewIntent(uri: Uri) {
         player.clearMediaItems()
-        localMusicProvider.getMusicItemFromUri(uri)?.let {
-            updateCurrentTrack(it)
-        }
+        onIntent(uri)
     }
 
-    fun playTrack(trackItem: MusicItem) {
-        updateCurrentTrack(trackItem)
+
+    private fun sendMusicServiceCommand(action: String, uri: Uri? = null) {
+        val intent = Intent(context, MusicService::class.java).apply {
+            this.action = action
+            uri?.let { putExtra(MusicService.EXTRA_TRACK, it.toString()) }
+        }
+        context.startService(intent)
     }
+
+
+
 
     companion object {
         const val TAG = "MusicPlayerViewModel"

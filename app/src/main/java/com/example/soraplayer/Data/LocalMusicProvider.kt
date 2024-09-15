@@ -58,6 +58,8 @@ class LocalMusicProvider(
             val albumColumn = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)
             val durationColumn = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)
             val albumIdColumn = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)
+            val sizeColumn = cursor.getColumnIndex(MediaStore.Audio.Media.SIZE)
+            val dateModifiedColumn = cursor.getColumnIndex(MediaStore.Audio.Media.DATE_MODIFIED)
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColumn)
@@ -80,7 +82,9 @@ class LocalMusicProvider(
                         duration = duration,
                         uri = ContentUris.withAppendedId(MUSIC_COLLECTION_URI, id),
                         absolutePath = absolutePath,
-                        albumArtUri = albumArtUri
+                        albumArtUri = albumArtUri,
+                        size = cursor.getLong(sizeColumn),
+                        dateModified = cursor.getLong(dateModifiedColumn)
                     )
                 )
             }

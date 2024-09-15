@@ -94,6 +94,7 @@ private fun FolderListItem(
             fontSize = 12.sp,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
+            color = Color.White,
             modifier = Modifier
                 .padding(start = 4.dp)
         )

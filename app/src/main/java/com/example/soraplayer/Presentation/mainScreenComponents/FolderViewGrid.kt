@@ -95,6 +95,7 @@ private fun FolderGridItem(
             textAlign = TextAlign.Start,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
+            color = Color.White,
             modifier = Modifier
                 .padding(start = 4.dp)
         )

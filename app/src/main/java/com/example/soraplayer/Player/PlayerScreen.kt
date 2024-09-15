@@ -44,6 +44,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -56,6 +58,7 @@ import androidx.media3.ui.PlayerView
 import androidx.media3.ui.TimeBar
 import com.example.soraplayer.R
 import com.example.soraplayer.Utils.toHhMmSs
+import com.example.soraplayer.ui.theme.poppins
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -164,7 +167,7 @@ private fun UpperControls(
     modifier: Modifier = Modifier
 ){
     Column(
-        modifier = modifier.background(Color.Black.copy(0.7f))
+        modifier = modifier.background(Color.Transparent)
     ){
         Box(modifier = Modifier
             .fillMaxWidth()
@@ -176,8 +179,8 @@ private fun UpperControls(
                     text = videoTitle,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    color = Color(0xFF049FFD),
-                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(12.dp)
                 )
             },
@@ -186,11 +189,11 @@ private fun UpperControls(
                     Icon(
                         Icons.Rounded.ArrowBack,
                         stringResource(id = R.string.go_back),
-                        tint = Color(0xFF049FFD)
+                        tint = Color.White
                     )
                 }
             },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black.copy(0.7f))
+            colors = TopAppBarDefaults.topAppBarColors(Color.Transparent)
         )
     }
 
@@ -275,7 +278,7 @@ private fun BottomControls(
     }
 
     Column(
-        modifier = modifier.background(Color.Black.copy(0.7f))
+        modifier = modifier.background(Color.Transparent)
     ){
         Row(
             modifier = Modifier
@@ -285,7 +288,7 @@ private fun BottomControls(
             Text(
                 text = "${currentTime.toHhMmSs()}-${totalTime.toHhMmSs()}",
                 modifier = Modifier.padding(horizontal = 12.dp),
-                color = Color(0xFF049FFD),
+                color = Color.White,
                 fontWeight = FontWeight.SemiBold
             )
             Spacer(modifier = Modifier.weight(1f))
@@ -294,7 +297,7 @@ private fun BottomControls(
                 Icon(
                     painterResource(id = if(resizeMode  == AspectRatioFrameLayout.RESIZE_MODE_FIT) R.drawable.aspect_ratio_24dp_e8eaed_fill0_wght400_grad0_opsz24 else R.drawable.fit_screen_24dp_e8eaed_fill0_wght400_grad0_opsz24),
                     stringResource(id = R.string.toggle_fitScreen),
-                    tint = Color(0xFF049FFD)
+                    tint = Color.White
                 )
             }
             IconButton(
@@ -304,7 +307,7 @@ private fun BottomControls(
                 Icon(
                     painterResource(id = R.drawable.screen_rotation_24dp_e8eaed_fill0_wght400_grad0_opsz24),
                     stringResource(id = R.string.rotate_screen),
-                    tint =  Color(0xFF049FFD)
+                    tint =  Color.White
                 )
             }
         }
@@ -346,7 +349,7 @@ private fun MiddleControlsItem(
         FilledIconButton(
             onClick = onIconClick,
             colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
-                containerColor = Color(0xFF049FFD)
+                containerColor = Color.White
             )
         ) {
             Icon(
@@ -368,7 +371,7 @@ fun CustomSeekBar(
     totalDuration: Long,
     modifier: Modifier = Modifier
 ){
-    val primaryColor = Color(0xFF049FFD)
+    val primaryColor = Color.White
 
     AndroidView(
         factory = { context ->

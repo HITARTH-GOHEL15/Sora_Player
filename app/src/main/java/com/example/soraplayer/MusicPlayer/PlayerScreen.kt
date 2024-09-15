@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -22,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -77,8 +81,8 @@ fun MusicPlayerScreen(
             ) {
                 IconButton(onClick = { onBackClick() }) {
                     Icon(
-                        painter = painterResource(id = R.drawable.keyboard_double_arrow_left_24dp_e8eaed_fill0_wght400_grad0_opsz24),
-                        contentDescription = "Back",
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = null,
                         tint = Color.White
                     )
                 }
@@ -205,7 +209,7 @@ fun MusicSeekBar(
     totalTime: Long,
     modifier: Modifier = Modifier
 ) {
-    var position by remember { mutableStateOf(player.currentPosition) }
+    var position by remember { mutableLongStateOf(player.currentPosition) }
     LaunchedEffect(player) {
         while (true) {
             position = player.currentPosition

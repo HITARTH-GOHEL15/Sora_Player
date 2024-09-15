@@ -136,6 +136,22 @@ fun MainScreen(
         }
     }
 
+    val filteredTracks by remember(searchQuery , sortOrder , sortDirection) {
+        derivedStateOf {
+            val sortedList = when(sortOrder){
+                SortOrder.Name -> musicViewStateFlow.sortedBy { it.name }
+                SortOrder.Date -> musicViewStateFlow.sortedBy { it.dateModified }
+                SortOrder.Size -> musicViewStateFlow.sortedBy { it.size }
+            }
+            val finalList = if(sortDirection == SortDirection.Descending) sortedList.reversed() else sortedList
+            if (searchQuery.isNotBlank()) {
+                finalList.filter { it.name.contains(searchQuery, ignoreCase = true) }
+            } else {
+                finalList
+            }
+        }
+    }
+
     val filteredFolderVideos by remember(searchQuery, sortOrder, sortDirection, mainViewModel.currentSelectedFolder) {
         derivedStateOf {
             val sortedList = when (sortOrder) {
@@ -181,7 +197,7 @@ fun MainScreen(
                                 Text(
                                     text = "Search",
                                     fontFamily = poppins,
-                                    color =  Color(0xFFEEEEEE)
+                                    color =  MaterialTheme.colorScheme.onBackground
                                 )
                                           },
                             modifier = Modifier.fillMaxWidth(),
@@ -231,6 +247,7 @@ fun MainScreen(
                                 text = "Player",
                                 fontFamily = poppins,
                                 fontWeight = FontWeight.Bold,
+                                color = Color.White,
                                 style = MaterialTheme.typography.titleLarge
                             )
                         }
@@ -277,8 +294,6 @@ fun MainScreen(
             NavigationBar(
                 tonalElevation = 12.dp,
                 containerColor = Color.Transparent,
-                modifier = Modifier
-                    .border(0.2.dp , color = Color(0xFF892CDC))
             ){
                 NavigationBarItem(
                     colors = NavigationBarItemDefaults.colors(
@@ -510,7 +525,7 @@ fun MainScreen(
 
                     BottomNavigationScreens.MusicView -> {
                        MusicList(
-                           musicTracks = musicViewStateFlow,
+                           musicTracks = filteredTracks,
                            onItemClick = onMusicItemClick
                        )
                     }
