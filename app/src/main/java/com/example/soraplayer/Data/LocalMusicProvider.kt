@@ -2,7 +2,11 @@ package com.example.soraplayer.Data
 
 import android.app.Application
 import android.content.ContentUris
+import android.content.Context
 import android.database.ContentObserver
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.os.Handler
@@ -21,6 +25,7 @@ import java.io.File
 class LocalMusicProvider(
     private val applicationContext: Application
 ) {
+
     fun getMediaMusicFlow(
         selection: String? = "${MediaStore.Audio.Media.MIME_TYPE}=?",
         selectionArgs: Array<String>? = arrayOf("audio/mpeg"),
@@ -68,11 +73,15 @@ class LocalMusicProvider(
                 val artist = cursor.getStringOrNull(artistColumn) ?: "Unknown Artist"
                 val album = cursor.getStringOrNull(albumColumn) ?: "Unknown Album"
                 val duration = cursor.getLong(durationColumn)
-                val albumId = cursor.getLong(albumIdColumn)
-                val albumArtUri = ContentUris.withAppendedId(
-                    Uri.parse("content://media/external/audio/albumart"),
-                    albumId
+                val  uri = ContentUris.withAppendedId(
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                    id
                 )
+                val coverBytes = MediaMetadataRetriever().apply {
+                    setDataSource(applicationContext, uri)
+                }.embeddedPicture
+                val songCover: Bitmap? = if (coverBytes != null)
+                    BitmapFactory.decodeByteArray(coverBytes, 0, coverBytes.size) else null
                 musicItems.add(
                     MusicItem(
                         id = id,
@@ -82,9 +91,10 @@ class LocalMusicProvider(
                         duration = duration,
                         uri = ContentUris.withAppendedId(MUSIC_COLLECTION_URI, id),
                         absolutePath = absolutePath,
-                        albumArtUri = albumArtUri,
                         size = cursor.getLong(sizeColumn),
-                        dateModified = cursor.getLong(dateModifiedColumn)
+                        dateModified = cursor.getLong(dateModifiedColumn),
+                        artWork = songCover
+
                     )
                 )
             }

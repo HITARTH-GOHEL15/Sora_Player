@@ -11,13 +11,20 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import com.example.soraplayer.Data.LocalMusicProvider
 import com.example.soraplayer.Model.MusicItem
+import com.example.soraplayer.MusicPlayer.MusicService.MusicService
+import com.example.soraplayer.MusicPlayer.MusicService.MusicServiceHandler
 import com.example.soraplayer.MyApplication
+import com.example.soraplayer.Utils.HomeUIState
+import com.example.soraplayer.Utils.MediaStateEvents
+import com.example.soraplayer.Utils.MusicStates
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
@@ -27,21 +34,24 @@ import kotlinx.coroutines.launch
 class MusicPlayerViewModel(
     private val context: Context,
     val player: ExoPlayer,
-    private val mediaSession: MediaSession,
+    private val musicServiceHandler: MusicServiceHandler,
     private val localMusicProvider: LocalMusicProvider,
 ) : ViewModel() {
 
     private val _musicPlayerState = MutableStateFlow(MusicPlayerState())
     val musicPlayerState = _musicPlayerState.asStateFlow()
 
+
+
     init {
         player.prepare()
+        observeMusicStates()
         fetchMusic()
+
     }
 
     override fun onCleared() {
         player.release()
-        mediaSession.release()
         super.onCleared()
     }
 
@@ -66,7 +76,7 @@ class MusicPlayerViewModel(
     private fun setMediaItem(uri: Uri) {
         player.apply {
             clearMediaItems()
-            addMediaItem(MediaItem.fromUri(uri))  // Load the media item from the given URI
+            addMediaItem(MediaItem.fromUri(uri))
             playWhenReady = true
             prepare()
         }
@@ -75,67 +85,112 @@ class MusicPlayerViewModel(
         }
     }
 
-    fun onPlayPauseClick() {
-        if (player.isPlaying) {
-            player.pause()
-            _musicPlayerState.update { state -> state.copy(isPlaying = false) }
-            sendMusicServiceCommand(MusicService.ACTION_PAUSE)
-        } else {
-            player.play()
-            _musicPlayerState.update { state -> state.copy(isPlaying = true) }
-            sendMusicServiceCommand(MusicService.ACTION_PLAY)
+    private fun observeMusicStates() {
+        viewModelScope.launch {
+            musicServiceHandler.musicStates.collectLatest { musicState ->
+                when (musicState) {
+                    is MusicStates.Initial -> {
+                        // Handle initial state if necessary
+                    }
+                    is MusicStates.MediaBuffering -> {
+                        _musicPlayerState.update { state ->
+                            state.copy(
+                                isBuffering = true,
+                                currentPosition = musicState.progress
+                            )
+                        }
+                    }
+                    is MusicStates.MediaReady -> {
+                        _musicPlayerState.update { state ->
+                            state.copy(
+                                isBuffering = false,
+                                duration = musicState.duration
+                            )
+                        }
+                    }
+                    is MusicStates.MediaPlaying -> {
+                        _musicPlayerState.update { state ->
+                            state.copy(isPlaying = musicState.isPlaying)
+                        }
+                    }
+                    is MusicStates.CurrentMediaPlaying -> {
+                        // Update current track index or related UI
+                        _musicPlayerState.update { state ->
+                            state.copy(currentTrackIndex = musicState.mediaItemIndex)
+                        }
+                    }
+                    is MusicStates.MediaProgress -> {
+                        _musicPlayerState.update { state ->
+                            state.copy(currentPosition = musicState.progress)
+                        }
+                    }
+                    else -> {
+                        // Optionally handle unexpected states
+                        Log.w(TAG, "Unhandled MusicState: $musicState")
+                    }
+                }
+            }
         }
     }
 
+
+    fun onPlayPauseClick() {
+       viewModelScope.launch {
+           musicServiceHandler.onMediaStateEvents(MediaStateEvents.PlayPause)
+       }
+    }
+
     fun onSeekForwardClick() {
-        player.seekForward()
-        sendMusicServiceCommand(MusicService.ACTION_SEEK_FORWARD)
+        viewModelScope.launch {
+            musicServiceHandler.onMediaStateEvents(MediaStateEvents.Forward)
+        }
     }
 
     fun onSeekBackwardClick() {
-        player.seekBack()
-        sendMusicServiceCommand(MusicService.ACTION_SEEK_BACKWARD)
+        viewModelScope.launch {
+            musicServiceHandler.onMediaStateEvents(MediaStateEvents.Backward)
+        }
     }
 
+
     fun playPauseOnActivityLifeCycleEvents(shouldPause: Boolean) {
-        if (shouldPause) {
-            player.pause()
-            _musicPlayerState.update { state -> state.copy(isPlaying = false) }
-        } else {
-            player.play()
-            _musicPlayerState.update { state -> state.copy(isPlaying = true) }
+        viewModelScope.launch {
+            val event = if (shouldPause) MediaStateEvents.Stop else MediaStateEvents.PlayPause
+            musicServiceHandler.onMediaStateEvents(event)
         }
     }
 
     fun onIntent(uri: Uri) {
         // Check if it's a local music file or a URL
+        // Check if the URI is a web URL (http/https) or a local file (content/file)
+        // Check if the URI is a web URL (http/https) or a local file (content/file)
         if (uri.scheme == "http" || uri.scheme == "https") {
-            // It's an internet URL, directly set the media item
+            // It's an internet URL, set the media item directly
             setMediaItem(uri)
         } else {
-            // Try to fetch a local music item from the URI
+            // It's a local video file, handle it with the localMediaProvider (already in your code)
             localMusicProvider.getMusicItemFromUri(uri)?.let {
                 updateCurrentTrack(it)
-            } ?: run {
-                // If it's not in the local library, try to play it directly
-                setMediaItem(uri)
             }
         }
     }
 
     fun onNewIntent(uri: Uri) {
         player.clearMediaItems()
-        onIntent(uri)
-    }
-
-
-    private fun sendMusicServiceCommand(action: String, uri: Uri? = null) {
-        val intent = Intent(context, MusicService::class.java).apply {
-            this.action = action
-            uri?.let { putExtra(MusicService.EXTRA_TRACK, it.toString()) }
+        localMusicProvider.getMusicItemFromUri(uri)?.let {
+            updateCurrentTrack(it)
         }
-        context.startService(intent)
     }
+
+    fun onIntentFromDeepLink(slug: String, timestamp: Int?) {
+        val audioUri = Uri.parse("https://sora-player.web.app/play-music/$slug")
+        setMediaItem(audioUri)
+        timestamp?.let {
+            player.seekTo(it * 1000L)
+        }
+    }
+
+
 
 
 
@@ -158,13 +213,13 @@ class MusicPlayerViewModel(
                     )
                     .build()
 
-                val mediaSession = MediaSession.Builder(context, player).build()
+                val musicServiceHandler = MusicServiceHandler(player)
 
                 MusicPlayerViewModel(
                     context = context,
                     player = player,
-                    mediaSession = mediaSession,
-                    localMusicProvider = LocalMusicProvider(application)
+                    localMusicProvider = LocalMusicProvider(application),
+                    musicServiceHandler = musicServiceHandler
                 )
             }
         }
@@ -174,5 +229,9 @@ class MusicPlayerViewModel(
 data class MusicPlayerState(
     val musicItems: List<MusicItem> = emptyList(),
     val currentTrack: MusicItem? = null,
-    val isPlaying: Boolean = false
+    val isPlaying: Boolean = false,
+    val isBuffering: Boolean = false,
+    val duration: Long = 0L,
+    val currentPosition: Long = 0L,
+    val currentTrackIndex: Int = -1
 )

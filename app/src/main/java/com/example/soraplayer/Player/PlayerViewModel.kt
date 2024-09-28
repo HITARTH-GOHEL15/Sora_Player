@@ -26,6 +26,7 @@ import com.example.soraplayer.MyApplication
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import java.util.UUID
 
 @UnstableApi
 class PlayerViewModel(
@@ -129,6 +130,7 @@ class PlayerViewModel(
     }
 
     fun onIntent(uri: Uri) {
+            // Check if the URI is a web URL (http/https) or a local file (content/file)
         // Check if the URI is a web URL (http/https) or a local file (content/file)
         if (uri.scheme == "http" || uri.scheme == "https") {
             // It's an internet URL, set the media item directly
@@ -137,8 +139,12 @@ class PlayerViewModel(
             // It's a local video file, handle it with the localMediaProvider (already in your code)
             localMediaProvider.getVideoItemFromContentUri(uri)?.let {
                 updateCurrentVideoItem(it)
+
+
             }
         }
+
+
     }
 
     fun onNewIntent(uri:Uri){
@@ -149,7 +155,7 @@ class PlayerViewModel(
     }
 
     fun onIntentFromDeepLink(slug: String, timestamp: Int?) {
-        val mediaUri = Uri.parse("https://www.example.com/video/$slug")
+        val mediaUri = Uri.parse("https://sora-player.web.app/play/$slug")
         setMediaItem(mediaUri)
         timestamp?.let {
             player.seekTo(it * 1000L)
@@ -195,7 +201,9 @@ class PlayerViewModel(
                     )
                     .build()
 
-                val mediaSession = androidx.media3.session.MediaSession.Builder(application,player).build()
+                val mediaSession = androidx.media3.session.MediaSession.Builder(application,player)
+                    .setId(UUID.randomUUID().toString())
+                    .build()
 
                 var loudnessEnhancer = LoudnessEnhancer(player.audioSessionId)
 

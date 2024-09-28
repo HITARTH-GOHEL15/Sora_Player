@@ -2,8 +2,6 @@ package com.example.soraplayer.Model
 
 import android.annotation.SuppressLint
 import android.net.Uri
-import android.os.Parcel
-import android.os.Parcelable
 
 data class VideoItem(
     val name: String,
@@ -15,6 +13,7 @@ data class VideoItem(
     val height: Int,
     val duration: Long,
     val dateModified: Long,
+    val date: String
 ){
     @SuppressLint("DefaultLocale")
     fun Long.toHhMmSs(): String {

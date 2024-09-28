@@ -190,7 +190,7 @@ private fun VideoListItem(
                             modifier = Modifier.background(color = Color.Transparent)
                         )
                         FlowRowItem(
-                            text = "${videoItem.height} x ${videoItem.width}",
+                            text = "${videoItem.date}",
                             modifier = Modifier.background(color = Color.Transparent)
                         )
                     }

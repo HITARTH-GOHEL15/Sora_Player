@@ -67,6 +67,7 @@ class PlayerActivity: ComponentActivity() {
         // Handle deep link
         if (intentUri != null) {
             handleDeepLink(intentUri)
+            handleAndroidAppLink(intentUri)
         }
 
         // Handle video sharing (URL or file)
@@ -75,18 +76,35 @@ class PlayerActivity: ComponentActivity() {
         }
     }
 
-    private fun handleDeepLink(uri: Uri?){
-        val slug = uri?.getQueryParameter("slug")
-        val timestamp = uri?.getQueryParameter("timestamp")?.toIntOrNull()
-
-        if (uri != null) {
-            Log.d(TAG , "handle URI deep link")
-            playerViewModel.onIntent(uri)
-        } else if(slug != null) {
-           playerViewModel.onIntentFromDeepLink(slug, timestamp)
+    private fun handleDeepLink(uri: Uri?) {
+        if (uri == null) {
+            Log.e(TAG, "Received null URI in deep link")
+            return
         }
 
+        val slug = uri.getQueryParameter("slug")
+        val timestamp = uri.getQueryParameter("timestamp")?.toIntOrNull()
+
+        if (slug != null) {
+            // If slug is present, handle it by passing to ViewModel
+            playerViewModel.onIntentFromDeepLink(slug, timestamp)
+        } else {
+            // If no slug, assume it's a regular video URI and pass it
+            playerViewModel.onIntent(uri)
+        }
     }
+
+      private  fun handleAndroidAppLink(uri: Uri?) {
+            val videoUrl = uri?.getQueryParameter("video_url") // Correctly extract the 'video_url' parameter
+
+            if (videoUrl != null) {
+                val videoUri = Uri.parse(videoUrl)
+                playerViewModel.onIntent(videoUri) // Pass the video URL to the player
+            } else {
+                Log.e(TAG, "Video URL is missing in the deep link")
+            }
+        }
+
 
     private fun handleShareIntent(intent: Intent?) {
         when (intent?.action) {

@@ -2,8 +2,6 @@ package com.example.soraplayer.Data
 
 import android.app.Application
 import android.content.ContentUris
-import android.content.ContentValues
-import android.content.Context
 import android.database.ContentObserver
 import android.net.Uri
 import android.os.Build
@@ -19,7 +17,6 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import java.io.File
-import java.io.IOException
 
 class LocalMediaProvider(
     private val applicationContext: Application
@@ -87,11 +84,13 @@ class LocalMediaProvider(
             val heightColumn = cursor.getColumnIndex(MediaStore.Video.Media.HEIGHT)
             val sizeColumn = cursor.getColumnIndex(MediaStore.Video.Media.SIZE)
             val dateModifiedColumn = cursor.getColumnIndex(MediaStore.Video.Media.DATE_MODIFIED)
+            val dateTakenColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_TAKEN)
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColumn)
                 val absolutePath = cursor.getString(dataColumn)
                 val name = absolutePath.split("/").lastOrNull().toString()
+                val datataken = cursor.getLong(dateTakenColumn)
                 videoItems.add(
                     VideoItem(
                         id = id,
@@ -102,7 +101,9 @@ class LocalMediaProvider(
                         width = cursor.getInt(widthColumn),
                         height = cursor.getInt(heightColumn),
                         size = cursor.getLong(sizeColumn),
-                        dateModified = cursor.getLong(dateModifiedColumn)
+                        dateModified = cursor.getLong(dateModifiedColumn),
+                        date = java.text.DateFormat.getDateTimeInstance().format(datataken)
+                        
                     )
                 )
             }
@@ -131,7 +132,10 @@ class LocalMediaProvider(
             MediaStore.Video.Media.HEIGHT,
             MediaStore.Video.Media.WIDTH,
             MediaStore.Video.Media.SIZE,
-            MediaStore.Video.Media.DATE_MODIFIED
+            MediaStore.Video.Media.DATE_MODIFIED,
+            MediaStore.Video.Media.DATE_ADDED,
+            MediaStore.Video.Media.DATE_TAKEN,
+            MediaStore.Video.Media.YEAR
         )
     }
 

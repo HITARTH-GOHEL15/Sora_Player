@@ -5,6 +5,7 @@ plugins {
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
     id("kotlin-parcelize")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -80,11 +81,15 @@ dependencies {
 
     implementation(libs.coil.compose)
 
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+
 
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.exoplayer.dash)
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.session)
+    implementation(libs.androidx.legacy.support.v4)
 
 
 }

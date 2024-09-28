@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "291182449571",
+    "project_id": "sora-player",
+    "storage_bucket": "sora-player.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:291182449571:android:adb26ba67ae279f6574016",
+        "android_client_info": {
+          "package_name": "com.example.soraplayer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsBmH7pLCRW0lx6kf_Op3xoggYenfL-8E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

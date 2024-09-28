@@ -2,6 +2,7 @@ package com.example.soraplayer.Presentation.Common
 
 import android.annotation.SuppressLint
 import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,77 +25,79 @@ import androidx.compose.ui.unit.dp
 import com.example.soraplayer.R
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun RequestMediaPermission(
     appContent: @Composable () -> Unit,
 ) {
+    // Combine audio and video permissions for Android 13+ (Tiramisu)
+    val permissionsList = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        listOf(
+            android.Manifest.permission.READ_MEDIA_AUDIO,
+            android.Manifest.permission.READ_MEDIA_VIDEO,
+            android.Manifest.permission.FOREGROUND_SERVICE,
+            android.Manifest.permission.POST_NOTIFICATIONS
+        )
+    } else {
+        listOf(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+    }
 
-            val readVideoPermissionState =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    rememberPermissionState(
-                        android.Manifest.permission.READ_MEDIA_VIDEO,
-                    )
-                    rememberPermissionState(
-                        android.Manifest.permission.READ_MEDIA_AUDIO
-                    )
-                } else {
-                    rememberPermissionState(
-                        android.Manifest.permission.READ_EXTERNAL_STORAGE
-                    )
-                }
+    // Create permission state for multiple permissions
+    val permissionState = rememberMultiplePermissionsState(permissionsList)
 
-            fun requestPermissions() {
-                readVideoPermissionState.launchPermissionRequest()
-            }
+    // Function to request permissions
+    fun requestPermissions() {
+        permissionState.launchMultiplePermissionRequest()
+    }
 
-            LaunchedEffect(key1 = Unit) {
-                if (!readVideoPermissionState.status.isGranted) {
-                    requestPermissions()
-                }
-            }
+    LaunchedEffect(key1 = Unit) {
+        if (!permissionState.allPermissionsGranted) {
+            requestPermissions()
+        }
+    }
 
-            if (readVideoPermissionState.status.isGranted) {
-
-                appContent()
-
-            } else {
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(color = MaterialTheme.colorScheme.background),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
+    // Check if permissions are granted
+    if (permissionState.allPermissionsGranted) {
+        appContent() // Proceed to app content
+    } else {
+        // Permission denied UI
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(color = MaterialTheme.colorScheme.background),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                painterResource(id = R.drawable.warning_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error
+            )
+            Text(
+                text = "Permissions are required to access media files",
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.error
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+            if (permissionState.shouldShowRationale) {
+                OutlinedButton(
+                    onClick = { requestPermissions() },
+                    colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.errorContainer)
                 ) {
-                    Icon(
-                        painterResource(id = R.drawable.warning_24dp_e8eaed_fill0_wght400_grad0_opsz24),
-                        null,
-                        tint = MaterialTheme.colorScheme.error
-                    )
                     Text(
-                        text = "permission denied",
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.error
+                        text = "Request Again",
+                        color = MaterialTheme.colorScheme.onErrorContainer
                     )
-                    if (readVideoPermissionState.status.shouldShowRationale) {
-                        Spacer(modifier = Modifier.size(8.dp))
-                        OutlinedButton(
-                            onClick = { requestPermissions() },
-                            colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.errorContainer)
-                        ) {
-                            Text(
-                                text = "request Again!",
-                                color = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                        }
-                    }
                 }
             }
         }
+    }
+}
+
 

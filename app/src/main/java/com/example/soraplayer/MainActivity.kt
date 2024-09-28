@@ -10,6 +10,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
@@ -27,6 +28,7 @@ import dagger.hilt.android.UnstableApi
 class MainActivity : ComponentActivity() {
 
 
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     @OptIn(androidx.media3.common.util.UnstableApi::class)
     @UnstableApi
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -78,6 +80,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
 
 
 

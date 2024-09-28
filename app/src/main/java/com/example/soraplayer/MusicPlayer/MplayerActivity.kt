@@ -2,13 +2,22 @@ package com.example.soraplayer.MusicPlayer
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Column
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
+import com.example.soraplayer.MainScreen.MainViewModel
+import com.example.soraplayer.Model.MusicItem
+import com.example.soraplayer.MusicPlayer.MusicService.MusicService
 import com.example.soraplayer.Player.PlayerActivity
+import com.example.soraplayer.Player.PlayerActivity.Companion
 import com.example.soraplayer.ui.theme.SoraPlayerTheme
 
 @UnstableApi
@@ -16,52 +25,93 @@ class MusicPlayerActivity : ComponentActivity() {
 
     private val musicPlayerViewModel by viewModels<MusicPlayerViewModel>(factoryProducer = { MusicPlayerViewModel.factory })
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        handleShareIntent(intent)
-        val audioUri = intent.data
-        if (audioUri != null) {
-            Log.d(TAG, "OnNewIntent Uri is not null")
-            musicPlayerViewModel.onNewIntent(audioUri)
-            startMusicService(audioUri)
-            stopMusicService()
-        }
+        startMusicService()
+
+        handleIntent(intent)
+
+
+
+
 
         setContent {
             SoraPlayerTheme {
                 MusicPlayerScreen(
                     viewModel = musicPlayerViewModel,
-                    onBackClick = { finish() }
+                    onBackClick = { finish() },
                 )
             }
         }
     }
 
-    private fun startMusicService(audioUri: Uri) {
-        val intent = Intent(this, MusicService::class.java).apply {
-            action = MusicService.ACTION_PLAY
-            putExtra(MusicService.EXTRA_TRACK, audioUri.toString())
+    private fun startMusicService() {
+        Intent(this, MusicService::class.java).also { intent ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent)
+            } else {
+                startService(intent)
+            }
         }
-        startService(intent)
     }
-    private fun stopMusicService() {
-        val intent = Intent(this, MusicService::class.java).apply {
-            action = MusicService.ACTION_STOP
-        }
-        startService(intent)
-    }
+
+
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        handleShareIntent(intent)
-        val audioUri = intent.data
-        if (audioUri != null) {
-            Log.d(TAG, "OnNewIntent Uri is not null")
-            musicPlayerViewModel.onNewIntent(audioUri)
-            startMusicService(audioUri)
-            stopMusicService()
+        handleIntent(intent)
+
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        val intentUri = intent?.data
+
+        // Handle deep link
+        if (intentUri != null) {
+            handleDeepLink(intentUri)
+            handleAndroidAppLink(intentUri)
+        }
+
+        // Handle video sharing (URL or file)
+        if (intent?.action == Intent.ACTION_SEND) {
+            handleShareIntent(intent)
         }
     }
+
+    private fun handleDeepLink(uri: Uri?) {
+        if (uri == null) {
+            Log.e(com.example.soraplayer.MusicPlayer.MusicPlayerActivity.TAG, "Received null URI in deep link")
+            return
+        }
+
+        val slug = uri.getQueryParameter("slug")
+        val timestamp = uri.getQueryParameter("timestamp")?.toIntOrNull()
+
+        if (slug != null) {
+            // If slug is present, handle it by passing to ViewModel
+            musicPlayerViewModel.onIntentFromDeepLink(slug , timestamp)
+        } else {
+            // If no slug, assume it's a regular video URI and pass it
+            musicPlayerViewModel.onIntent(uri)
+        }
+    }
+
+    private  fun handleAndroidAppLink(uri: Uri?) {
+        val audioUrl = uri?.getQueryParameter("audio_url")
+        Log.d(TAG, "Extracted audio URL: $audioUrl")// Correctly extract the 'video_url' parameter
+
+        if (audioUrl != null) {
+            val audioUri = Uri.parse(audioUrl)
+            musicPlayerViewModel.onIntent(audioUri) // Pass the video URL to the player
+        } else {
+            Log.e(com.example.soraplayer.MusicPlayer.MusicPlayerActivity.TAG, "Video URL is missing in the deep link")
+        }
+    }
+
+
+
 
    private fun handleShareIntent(intent: Intent?) {
        when (intent?.action) {
@@ -73,14 +123,14 @@ class MusicPlayerActivity : ComponentActivity() {
                    sharedText?.let {
                        val uri = Uri.parse(it)
                        musicPlayerViewModel.onIntent(uri)  // Handle URL in ViewModel
-                       startMusicService(uri)
+
                    }
                } else if (type?.startsWith("audio/") == true) {
                    // Handle local audio file
                    val uri = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
                    uri?.let {
                        musicPlayerViewModel.onIntent(it)  // Handle local audio file in ViewModel
-                       startMusicService(uri)
+
                    }
                }
            }

@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,12 +15,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -87,27 +95,64 @@ fun MusicPlayerScreen(
                     )
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                Text(
-                    text = musicPlayerState.currentTrack?.name ?: "No Track Playing",
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleMedium
-                )
+                IconButton(
+                    onClick = {},
+                ) {
+                    Icon(
+                        Icons.Default.Share,
+                        contentDescription = null,
+                        tint = Color.White,
+                    )
+                }
+                IconButton(
+                    onClick = {},
+                ) {
+                    Icon(
+                        Icons.Default.Star,
+                        contentDescription = null,
+                        tint = Color.White,
+                    )
+                }
+                IconButton(
+                    onClick = {},
+                ) {
+                    Icon(
+                        Icons.Default.MoreVert,
+                        contentDescription = null,
+                        tint = Color.White,
+                    )
+                }
+
             }
 
             // Album Art
-            Image(
-                painter = rememberAsyncImagePainter(musicPlayerState.currentTrack?.albumArtUri),
-                contentDescription = "Album Art",
-                modifier = Modifier
-                    .size(300.dp)
-                    .padding(16.dp),
-                contentScale = ContentScale.Crop
-            )
+            if (
+                musicPlayerState.currentTrack?.artWork != null
+            ) {
+                Image(
+                    painter = rememberAsyncImagePainter(musicPlayerState.currentTrack?.artWork),
+                    contentDescription = "Album Art",
+                    modifier = Modifier
+                        .size(350.dp)
+                        .clip(shape = MaterialTheme.shapes.medium),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Image(
+                    painter = painterResource(R.drawable.music_note_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                    contentDescription = "Music Note",
+                    modifier = Modifier
+                        .size(350.dp)
+                        .clip(shape = MaterialTheme.shapes.medium),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Track Information
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(bottom = 24.dp)
             ) {
                 Text(
                     text = musicPlayerState.currentTrack?.name ?: "Unknown Title",
@@ -136,70 +181,48 @@ fun MusicPlayerScreen(
                     totalTime = musicPlayerState.currentTrack?.duration ?: 0L,
                     modifier = Modifier.fillMaxWidth()
                 )
+            }
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier
                 ) {
                     IconButton(onClick = { viewModel.onSeekBackwardClick() }) {
                         Icon(
-                            painter = painterResource(id = R.drawable.keyboard_double_arrow_left_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                            painter = painterResource(id = androidx.media3.session.R.drawable.media3_icon_skip_back_10),
                             contentDescription = "Seek Backward",
-                            tint = Color.White
+                            tint = Color.White,
+                            modifier = Modifier
+                                .size(150.dp)
+
                         )
                     }
-
+                    Spacer(modifier = Modifier.width(36.dp))
                     IconButton(onClick = { viewModel.onPlayPauseClick() }) {
                         Icon(
-                            painter = painterResource(id = if (musicPlayerState.isPlaying) R.drawable.pause_24dp_e8eaed_fill0_wght400_grad0_opsz24 else R.drawable.play_arrow_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                            painter = painterResource(id = if (musicPlayerState.isPlaying) R.drawable.pause_circle_24dp_e8eaed_fill0_wght400_grad0_opsz24 else R.drawable.play_circle_24dp_e8eaed_fill0_wght400_grad0_opsz24),
                             contentDescription = "Play/Pause",
-                            tint = Color.White
+                            tint = Color.White,
+                            modifier = Modifier
+                                .size(250.dp)
                         )
                     }
-
-                    IconButton(onClick = { viewModel.onSeekForwardClick() }) {
+                    Spacer(modifier = Modifier.width(36.dp))
+                    IconButton(
+                        onClick = { viewModel.onSeekForwardClick() }
+                    ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.keyboard_double_arrow_right_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                            painter = painterResource(id = androidx.media3.session.R.drawable.media3_icon_skip_forward_10),
                             contentDescription = "Seek Forward",
-                            tint = Color.White
+                            tint = Color.White,
+                            modifier = Modifier
+                                .size(150.dp)
+
                         )
                     }
                 }
             }
-
-            // Bottom Icons
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { /* Add to favorite */ }) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.favorite_24dp_e8eaed_fill0_wght400_grad0_opsz24),
-                        contentDescription = "Favorite",
-                        tint = Color.White
-                    )
-                }
-
-                IconButton(onClick = { /* Delete Track */ }) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.delete_24dp_e8eaed_fill0_wght400_grad0_opsz24),
-                        contentDescription = "Delete",
-                        tint = Color.White
-                    )
-                }
-
-                IconButton(onClick = { /* Share Track */ }) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.share_24dp_e8eaed_fill0_wght400_grad0_opsz24),
-                        contentDescription = "Share",
-                        tint = Color.White
-                    )
-                }
-            }
-        }
     }
 }
 
@@ -216,12 +239,21 @@ fun MusicSeekBar(
             delay(1000)
         }
     }
-
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        TrackSlider(
+            value = position.toFloat(),
+            onValueChange = {
+                position = it.toLong()
+            },
+            onValueChangeFinished = {
+                player.seekTo(position)
+            },
+            songDuration = totalTime.toFloat()
+        )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -233,3 +265,31 @@ fun MusicSeekBar(
         }
     }
 }
+
+@Composable
+fun TrackSlider(
+    value: Float,
+    onValueChange: (newValue: Float) -> Unit,
+    onValueChangeFinished: () -> Unit,
+    songDuration: Float
+) {
+    Slider(
+        value = value,
+        onValueChange = {
+            onValueChange(it)
+        },
+        onValueChangeFinished = {
+
+            onValueChangeFinished()
+
+        },
+        valueRange = 0f..songDuration,
+        colors = SliderDefaults.colors(
+            thumbColor = Color.White,
+            activeTrackColor = Color.Gray,
+            inactiveTrackColor = Color.DarkGray,
+        )
+    )
+}
+
+

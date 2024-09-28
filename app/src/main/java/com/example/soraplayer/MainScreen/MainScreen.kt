@@ -73,10 +73,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.soraplayer.Me.MeScreen
 import com.example.soraplayer.Model.MusicItem
 import com.example.soraplayer.Model.VideoItem
 import com.example.soraplayer.Presentation.mainScreenComponents.FolderItemGridLayout
 import com.example.soraplayer.Presentation.mainScreenComponents.FolderItemListLayout
+import com.example.soraplayer.Presentation.mainScreenComponents.MusicGrid
 import com.example.soraplayer.Presentation.mainScreenComponents.MusicList
 import com.example.soraplayer.Presentation.mainScreenComponents.VideoItemGridLayout
 import com.example.soraplayer.Presentation.mainScreenComponents.VideoViewList
@@ -367,12 +369,35 @@ fun MainScreen(
                     ),
                     selected = false,
                     label = { Text(
+                        text = "Stream",
+                        fontFamily = poppins,
+                        fontWeight = FontWeight.Bold,
+                        color =  Color(0xFFEEEEEE)
+                    ) },
+                    onClick = {
+                    },
+                    icon = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.stream_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                            contentDescription = "Network Stream",
+                            tint = Color(0xFFD9ACF5)
+                        )
+                    }
+                )
+                NavigationBarItem(
+                    colors = NavigationBarItemDefaults.colors(
+                        indicatorColor = Color(0xFF892CDC)
+                    ),
+                    selected = false,
+                    label = { Text(
                         text = "Me",
                         fontFamily = poppins,
                         fontWeight = FontWeight.Bold,
                         color =  Color(0xFFEEEEEE)
                     ) },
-                    onClick = { /*TODO*/ },
+                    onClick = {
+                        bottomNavigationScreen = BottomNavigationScreens.MeView
+                    },
                     icon = {
                         Icon(
                             painter = painterResource(id = R.drawable.person_24dp_e8eaed_fill0_wght400_grad0_opsz24),
@@ -393,6 +418,8 @@ fun MainScreen(
 
                     BottomNavigationScreens.FoldersView -> slideInHorizontally(){it}.togetherWith(slideOutHorizontally(){-it})
                     BottomNavigationScreens.MusicView ->  slideInHorizontally(){it}.togetherWith(slideOutHorizontally(){-it})
+                    BottomNavigationScreens.MeView -> slideInHorizontally(){-it}.togetherWith(slideOutHorizontally(){it})
+                    BottomNavigationScreens.NetworkStreamView -> TODO()
                 }
             },
             modifier = Modifier
@@ -522,12 +549,32 @@ fun MainScreen(
 
                         }
                     }
-
                     BottomNavigationScreens.MusicView -> {
-                       MusicList(
-                           musicTracks = filteredTracks,
-                           onItemClick = onMusicItemClick
-                       )
+                        if (isGridLayout) {
+                            MusicGrid(
+                                musicTracks = filteredTracks,
+                                onItemClick = onMusicItemClick,
+                                modifier = Modifier
+                                    .padding(bottom = 120.dp)
+                            )
+                            } else {
+                            MusicList(
+                                musicTracks = filteredTracks,
+                                onItemClick = onMusicItemClick,
+                                modifier = Modifier
+                                    .padding(bottom = 120.dp)
+                            )
+                        }
+                    }
+                    BottomNavigationScreens.NetworkStreamView -> {
+
+                    }
+                    BottomNavigationScreens.MeView -> {
+                        MeScreen(
+                            isRefreshing = isRefreshing,
+                            onRefresh = { mainViewModel.refreshData() },
+                            modifier = Modifier
+                        )
                     }
                 }
             }
@@ -681,7 +728,9 @@ fun LayoutChange(
 private enum class BottomNavigationScreens{
     VideosView,
     FoldersView,
-    MusicView
+    MusicView,
+    NetworkStreamView,
+    MeView
 }
 
 private enum class FoldersVideosNavigation {

@@ -202,7 +202,7 @@ private fun VideoGridItem(
                            .background(color = Color.Transparent)
                    ) {
                        FlowRowItem(text = "${videoItem.size / 1000000} MB" , modifier = Modifier.background(color = Color.Transparent))
-                       FlowRowItem(text = "${videoItem.height} x ${videoItem.width}" , modifier = Modifier.background(color = Color.Transparent))
+                       FlowRowItem(text = "${videoItem.date}" , modifier = Modifier.background(color = Color.Transparent))
                    }
                    Spacer(modifier = Modifier.weight(1f))
                    MoreVertMenu(

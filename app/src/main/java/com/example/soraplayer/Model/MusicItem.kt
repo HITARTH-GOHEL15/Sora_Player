@@ -1,5 +1,6 @@
 package com.example.soraplayer.Model
 
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
@@ -11,10 +12,10 @@ data class MusicItem(
     val name: String,
     val artist: String,
     val album: String,
-    val duration: Long,
+    var duration: Long,
     val uri: Uri,
-    val albumArtUri: Uri?,
     val dateModified: Long,
     val size: Long,
-    val absolutePath: String
+    val absolutePath: String,
+    val artWork: Bitmap?
 )
