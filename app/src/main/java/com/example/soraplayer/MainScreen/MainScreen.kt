@@ -67,6 +67,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -83,6 +84,7 @@ import com.example.soraplayer.Presentation.mainScreenComponents.MusicList
 import com.example.soraplayer.Presentation.mainScreenComponents.VideoItemGridLayout
 import com.example.soraplayer.Presentation.mainScreenComponents.VideoViewList
 import com.example.soraplayer.R
+import com.example.soraplayer.network_stream.NetworkStreamScreen
 import com.example.soraplayer.ui.theme.poppins
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshState
@@ -93,13 +95,17 @@ import kotlinx.coroutines.launch
 @Composable
 fun MainScreen(
     onVideoItemClick: (VideoItem) -> Unit,
-    onMusicItemClick: (MusicItem) -> Unit
+    onMusicItemClick: (MusicItem) -> Unit,
+    onPlayStream: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ){
     val layoutDirection = LocalLayoutDirection.current
 
     var bottomNavigationScreen by rememberSaveable {
         mutableStateOf(BottomNavigationScreens.VideosView)
     }
+
+    val context = LocalContext.current
 
     val mainViewModel: MainViewModel = viewModel(factory = MainViewModel.factory)
 
@@ -367,7 +373,7 @@ fun MainScreen(
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color(0xFF892CDC)
                     ),
-                    selected = false,
+                    selected = bottomNavigationScreen == BottomNavigationScreens.NetworkStreamView,
                     label = { Text(
                         text = "Stream",
                         fontFamily = poppins,
@@ -375,6 +381,7 @@ fun MainScreen(
                         color =  Color(0xFFEEEEEE)
                     ) },
                     onClick = {
+                        bottomNavigationScreen = BottomNavigationScreens.NetworkStreamView
                     },
                     icon = {
                         Icon(
@@ -419,7 +426,7 @@ fun MainScreen(
                     BottomNavigationScreens.FoldersView -> slideInHorizontally(){it}.togetherWith(slideOutHorizontally(){-it})
                     BottomNavigationScreens.MusicView ->  slideInHorizontally(){it}.togetherWith(slideOutHorizontally(){-it})
                     BottomNavigationScreens.MeView -> slideInHorizontally(){-it}.togetherWith(slideOutHorizontally(){it})
-                    BottomNavigationScreens.NetworkStreamView -> TODO()
+                    BottomNavigationScreens.NetworkStreamView -> slideInHorizontally(){it}.togetherWith(slideOutHorizontally(){-it})
                 }
             },
             modifier = Modifier
@@ -567,13 +574,15 @@ fun MainScreen(
                         }
                     }
                     BottomNavigationScreens.NetworkStreamView -> {
-
+                        NetworkStreamScreen(
+                            onPlayStream = onPlayStream,
+                        )
                     }
                     BottomNavigationScreens.MeView -> {
                         MeScreen(
                             isRefreshing = isRefreshing,
                             onRefresh = { mainViewModel.refreshData() },
-                            modifier = Modifier
+                            modifier = Modifier,
                         )
                     }
                 }

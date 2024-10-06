@@ -1,6 +1,7 @@
 package com.example.soraplayer
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
@@ -71,7 +72,14 @@ class MainActivity : ComponentActivity() {
                                         data = musicItem.uri
                                     }
                                 playerActivityLauncher.launch(playerIntent)
-                            }
+                            },
+                            onPlayStream = { url ->
+                                // Trigger PlayerActivity with the video URL
+                                val intent = Intent(this, PlayerActivity::class.java).apply {
+                                    data = Uri.parse(url)  // Pass the URL to PlayerActivity
+                                }
+                                startActivity(intent)
+                            },
                         )
                     }
 

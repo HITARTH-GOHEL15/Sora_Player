@@ -74,6 +74,10 @@ class PlayerActivity: ComponentActivity() {
         if (intent?.action == Intent.ACTION_SEND) {
             handleShareIntent(intent)
         }
+        // Check if the intent contains a URL and pass it to the player
+        if (intentUri != null) {
+            playerViewModel.onIntent(intentUri)
+        }
     }
 
     private fun handleDeepLink(uri: Uri?) {
