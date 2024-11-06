@@ -9,6 +9,7 @@ import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.util.Log
 import androidx.core.database.getStringOrNull
+import com.example.soraplayer.Model.FolderItem
 import com.example.soraplayer.Model.VideoItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -17,10 +18,14 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class LocalMediaProvider(
     private val applicationContext: Application
 ) {
+
+    private val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     // Implementation for LocalMediaProvider
     fun getVideoItemFromContentUri(uri: Uri): VideoItem?{
 
@@ -86,11 +91,28 @@ class LocalMediaProvider(
             val dateModifiedColumn = cursor.getColumnIndex(MediaStore.Video.Media.DATE_MODIFIED)
             val dateTakenColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_TAKEN)
 
+            val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColumn)
                 val absolutePath = cursor.getString(dataColumn)
                 val name = absolutePath.split("/").lastOrNull().toString()
                 val datataken = cursor.getLong(dateTakenColumn)
+                val duration = cursor.getLong(durationColumn)
+                val uri = ContentUris.withAppendedId(VIDEO_COLLECTION_URI, id)
+                val width = cursor.getInt(widthColumn)
+                val height = cursor.getInt(heightColumn)
+                val size = cursor.getLong(sizeColumn)
+
+                // Format date in "date/month/year" format
+                // Retrieve and format the date
+                val dateTaken = cursor.getLong(dateTakenColumn)
+                val dateModified = cursor.getLong(dateModifiedColumn)
+                val date = when {
+                    dateTaken > 0 -> dateFormat.format(dateTaken)
+                    dateModified > 0 -> dateFormat.format(dateModified * 1000L) // dateModified is in seconds
+                    else -> "Unknown" // Fallback if no date is available
+                }
                 videoItems.add(
                     VideoItem(
                         id = id,
@@ -102,7 +124,7 @@ class LocalMediaProvider(
                         height = cursor.getInt(heightColumn),
                         size = cursor.getLong(sizeColumn),
                         dateModified = cursor.getLong(dateModifiedColumn),
-                        date = java.text.DateFormat.getDateTimeInstance().format(datataken)
+                        date = date
                         
                     )
                 )
@@ -110,6 +132,14 @@ class LocalMediaProvider(
         }
         return videoItems.filter { File(it.absolutePath).exists() }
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -140,3 +170,4 @@ class LocalMediaProvider(
     }
 
 }
+

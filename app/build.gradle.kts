@@ -43,6 +43,9 @@ android {
     }
 }
 
+
+
+
 dependencies {
 
     implementation(libs.androidx.core.ktx)
@@ -83,6 +86,14 @@ dependencies {
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
+
+    // Retrofit for network requests
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+
+// Coil for image loading
+    implementation(libs.coil.compose.v210)
+
 
 
     implementation(libs.androidx.media3.exoplayer)

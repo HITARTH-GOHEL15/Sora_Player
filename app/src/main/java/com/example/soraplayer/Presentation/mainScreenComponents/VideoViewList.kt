@@ -2,8 +2,12 @@ package com.example.soraplayer.Presentation.mainScreenComponents
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,6 +62,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.soraplayer.MainScreen.MainViewModel
 import com.example.soraplayer.Model.VideoItem
 import com.example.soraplayer.Utils.toHhMmSs
 import com.google.accompanist.swiperefresh.SwipeRefresh
@@ -65,6 +71,7 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.glide.GlideImage
 
+@RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun VideoViewList(
     videoList: List<VideoItem>,
@@ -86,30 +93,33 @@ fun VideoViewList(
                 .fillMaxSize()
         ) {
             LazyColumn(
-                modifier = modifier,
+                modifier = modifier.padding(bottom = 8.dp),
                 state = scrollState,
                 verticalArrangement = Arrangement.Center,
             ) {
                 items(videoList, key = { it.name }) { videoItem ->
-                    VideoListItem(
-                        videoItem = videoItem,
-                        onItemClick = onVideoItemClick,
-                        modifier = Modifier.padding(6.dp)
-                    )
+                        VideoListItem(
+                            videoItem = videoItem,
+                            onItemClick = onVideoItemClick,
+                            videoUri = videoItem.uri,
+                        )
+                    }
                 }
-
             }
         }
     }
-}
 
+
+@RequiresApi(Build.VERSION_CODES.Q)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun VideoListItem(
     videoItem: VideoItem,
     onItemClick: (VideoItem) -> Unit,
+    videoUri: Uri = videoItem.uri,
     modifier: Modifier = Modifier
 ){
+    val mainViewModel: MainViewModel = viewModel(factory = MainViewModel.factory)
     var showRenameDialog by remember { mutableStateOf(false) }
     var showRemoveDialog by remember { mutableStateOf(false) }
     var newName by remember { mutableStateOf(videoItem.name) }
@@ -121,221 +131,194 @@ private fun VideoListItem(
             .clickable {
                 onItemClick(videoItem)
             }
-    ){
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            Box(
-                modifier = Modifier
-                    .height(70.dp)
-                    .size(100.dp)
-                    .padding(4.dp)
-                    .clip(shape = MaterialTheme.shapes.small),
-            ) {
-                GlideImage(
-                    imageModel = { videoItem.uri },
-                    imageOptions = ImageOptions(
-                        contentScale = ContentScale.Crop,
-                        alignment = Alignment.Center
-                    ),
-                    loading = {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .matchParentSize()
-                                .align(Alignment.Center)
-                        )
-                    }
-                )
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .background(color = Color.Transparent)
-                ) {
-                    FlowRow(
-                        modifier = Modifier
-                            .padding(4.dp)
-                            .align(Alignment.BottomEnd)
-                    ) {
-                        FlowRowItem2(text = videoItem.duration.toHhMmSs())
-                    }
-                }
-            }
-            Column(
+    ) {
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(8.dp)
             ) {
-                Text(
-                    text = videoItem.name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Start,
-                    fontSize = 12.sp,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
+                Box(
                     modifier = Modifier
-                        .padding(start = 5.dp, top = 5.dp),
-                    color = Color.White
-                )
-
-                Row(
+                        .height(70.dp)
+                        .size(100.dp)
+                        .padding(4.dp)
+                        .clip(shape = MaterialTheme.shapes.small),
+                ) {
+                    GlideImage(
+                        imageModel = { videoItem.uri },
+                        imageOptions = ImageOptions(
+                            contentScale = ContentScale.Crop,
+                            alignment = Alignment.Center
+                        ),
+                        loading = {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .align(Alignment.Center)
+                            )
+                        }
+                    )
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .background(color = Color.Transparent)
+                    ) {
+                        FlowRow(
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .align(Alignment.BottomEnd)
+                        ) {
+                            FlowRowItem2(text = videoItem.duration.toHhMmSs())
+                        }
+                    }
+                }
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                 ) {
-                    FlowRow(
+                    Text(
+                        text = videoItem.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Start,
+                        fontSize = 12.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
-                            .background(color = Color.Transparent)
+                            .padding(start = 5.dp, top = 5.dp),
+                        color = Color.White
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
                     ) {
-                        FlowRowItem(
-                            text = "${videoItem.size / 1000000} MB",
-                            modifier = Modifier.background(color = Color.Transparent)
-                        )
-                        FlowRowItem(
-                            text = "${videoItem.date}",
-                            modifier = Modifier.background(color = Color.Transparent)
+                        FlowRow(
+                            modifier = Modifier
+                                .background(color = Color.Transparent)
+                        ) {
+                            FlowRowItem(
+                                text = "${videoItem.size / 1000000} MB",
+                                modifier = Modifier.background(color = Color.Transparent)
+                            )
+                            FlowRowItem(
+                                text = videoItem.date,
+                                modifier = Modifier.background(color = Color.Transparent)
+                            )
+                        }
+                        Spacer(modifier = Modifier.weight(1f))
+                        MoreVertMenu(
+                            onRename = {
+                                newName = videoItem.name
+                                showRenameDialog = true
+                            },
+                            onRemove = {
+                                showRemoveDialog = true
+
+                            },
+                            onShare = {
+                                showShareDialog = true
+                            }
                         )
                     }
-                    Spacer(modifier = Modifier.weight(1f))
-                    MoreVertMenu(
-                        onRename = {
-                            newName = videoItem.name
-                            showRenameDialog = true
-                        },
-                        onRemove = {
-                            showRemoveDialog = true
-
-                        },
-                        onShare = {
-                            showShareDialog = true
-                        }
-                    )
                 }
             }
-        }
-        // Rename Dialog
-        if (showRenameDialog) {
-            AlertDialog(
-                onDismissRequest = { showRenameDialog = false },
-                title = { Text(
-                    "Rename Video",
-                    color = Color(0xFFD9ACF5)
-                ) },
-                text = {
-                    TextField(
-                        value = newName,
-                        onValueChange = { newName = it },
-                        label = { Text("New Name") }
-                    )
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            // Handle renaming logic here
-                            Toast.makeText(context, "Renamed to: $newName", Toast.LENGTH_SHORT).show()
-                            showRenameDialog = false
-                        }
-                    ) {
-                        Text(
-                            "Rename",
-                            color = Color(0xFFD9ACF5)
 
-                        )
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = { showRenameDialog = false }
-                    ) {
-                        Text(
-                            "Cancel",
-                            color = Color.White
-                        )
-                    }
-                },
-                containerColor = Color.Transparent,
-                modifier = Modifier.background(color = Color(0xFF222831))
-            )
-        }
 
-        // Remove Dialog
-        if (showRemoveDialog) {
-            AlertDialog(
-                onDismissRequest = { showRemoveDialog = false },
-                title = { Text(
-                    "Remove Video",
-                    color = Color(0xFFD9ACF5)
-                ) },
-                text = { Text(
-                    "Are you sure you want to remove this video?",
-                    color = Color.White
-                ) },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            // Handle removing logic here
-                            Toast.makeText(context, "Video removed", Toast.LENGTH_SHORT).show()
-                            showRemoveDialog = false
-                        }
-                    ) {
+            // Remove Dialog
+            if (showRemoveDialog) {
+                AlertDialog(
+                    onDismissRequest = { showRemoveDialog = false },
+                    title = {
                         Text(
-                            "Remove",
+                            "Remove Video",
                             color = Color(0xFFD9ACF5)
                         )
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = { showRemoveDialog = false }
-                    ) {
+                    },
+                    text = {
                         Text(
-                            "Cancel",
+                            "Are you sure you want to remove this video?",
                             color = Color.White
                         )
-                    }
-                },
-                containerColor = Color.Transparent,
-                modifier = Modifier.background(color = Color(0xFF222831))
-            )
-        }
-
-        if (showShareDialog) {
-            AlertDialog(
-                onDismissRequest = { showShareDialog = false },
-                title = { Text(
-                    "Share Video",
-                    color = Color(0xFFD9ACF5)
-                ) },
-                text = { Text(
-                    "Share this video with others?",
-                    color = Color.White
-                ) },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            shareVideo(context, videoItem)
-                            showShareDialog = false
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                // Handle removing logic here
+                                mainViewModel.deleteVideo(context, videoUri)
+                                showRemoveDialog = false
+                            }
+                        ) {
+                            Text(
+                                "Remove",
+                                color = Color(0xFFD9ACF5)
+                            )
                         }
-                    ) {
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = { showRemoveDialog = false }
+                        ) {
+                            Text(
+                                "Cancel",
+                                color = Color.White
+                            )
+                        }
+                    },
+                    containerColor = Color.Transparent,
+                    modifier = Modifier.background(color = Color(0xFF222831))
+                )
+            }
+
+            if (showShareDialog) {
+                AlertDialog(
+                    onDismissRequest = { showShareDialog = false },
+                    title = {
                         Text(
-                            "Share",
+                            "Share Video",
                             color = Color(0xFFD9ACF5)
                         )
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = { showShareDialog = false }
-                    ) {
+                    },
+                    text = {
                         Text(
-                            "Cancel",
+                            "Share this video with others?",
                             color = Color.White
                         )
-                    }
-                },
-                containerColor = Color.Transparent,
-                modifier = Modifier.background(color = Color(0xFF222831))
-            )
-        }
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                shareVideo(context, videoItem)
+                                showShareDialog = false
+                            }
+                        ) {
+                            Text(
+                                "Share",
+                                color = Color(0xFFD9ACF5)
+                            )
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = { showShareDialog = false }
+                        ) {
+                            Text(
+                                "Cancel",
+                                color = Color.White
+                            )
+                        }
+                    },
+                    containerColor = Color.Transparent,
+                    modifier = Modifier.background(color = Color(0xFF222831))
+                )
+            }
     }
+    // Add the bottom border line here
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(0.8.dp)
+            .background(Color.DarkGray) // Color for the border line
+    )
 }
 
 @Composable
@@ -420,19 +403,6 @@ fun MoreVertMenuList(
             .focusRequester(focusRequester)
             .background(color = MaterialTheme.colorScheme.background)
     ) {
-        DropdownMenuItem(
-            text = {
-                Text(
-                    "Rename",
-                    color = Color(0xFFD9ACF5)
-                )
-            },
-            onClick = {
-                onRename()
-                expanded = false
-
-            }
-        )
         DropdownMenuItem(
             text = {
                 Text(

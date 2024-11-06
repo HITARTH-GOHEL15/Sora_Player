@@ -4,8 +4,11 @@ import android.annotation.SuppressLint
 import android.app.Notification
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.service.credentials.Action
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -65,7 +68,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.soraplayer.MainScreen.LayoutChange
+import com.example.soraplayer.MainScreen.MainViewModel
 import com.example.soraplayer.Model.VideoItem
 import com.example.soraplayer.Utils.toHhMmSs
 import com.example.soraplayer.ui.theme.poppins
@@ -74,6 +79,7 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.glide.GlideImage
 
+@RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun VideoItemGridLayout(
     videoList: List<VideoItem>,
@@ -81,8 +87,6 @@ fun VideoItemGridLayout(
     modifier: Modifier,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
-    onRemove: (VideoItem) -> Unit,
-    onRename: (VideoItem) -> Unit,
     scrollState: LazyStaggeredGridState
 ) {
     Column(
@@ -107,8 +111,7 @@ fun VideoItemGridLayout(
                             videoItem = videoItem,
                             onItemClick = onVideoItemClick,
                             modifier = Modifier.padding(6.dp),
-                            onRename = onRename,
-                            onRemove = onRemove
+                            videoUri = videoItem.uri
                         )
                     }
 
@@ -118,15 +121,16 @@ fun VideoItemGridLayout(
     }
 
 
+@RequiresApi(Build.VERSION_CODES.Q)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun VideoGridItem(
     videoItem: VideoItem,
-    onRemove: (VideoItem) -> Unit,
-    onRename: (VideoItem) -> Unit,
     onItemClick: (VideoItem) -> Unit,
+    videoUri: Uri = videoItem.uri,
     modifier: Modifier = Modifier
 ){
+    val mainViewModel: MainViewModel = viewModel(factory = MainViewModel.factory)
     var showRenameDialog by remember { mutableStateOf(false) }
     var showRemoveDialog by remember { mutableStateOf(false) }
     var newName by remember { mutableStateOf(videoItem.name) }
@@ -181,90 +185,60 @@ private fun VideoGridItem(
                     }
                 }
             }
-                Text(
-                    text = videoItem.name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Start,
-                    maxLines = 2,
-                    fontSize = 12.sp,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .padding(start = 5.dp ,top = 5.dp),
-                    color = Color.White
-                )
-
-               Row(
-                   modifier = Modifier
-                       .fillMaxWidth()
-               ) {
-                   FlowRow(
-                       modifier = Modifier
-                           .background(color = Color.Transparent)
-                   ) {
-                       FlowRowItem(text = "${videoItem.size / 1000000} MB" , modifier = Modifier.background(color = Color.Transparent))
-                       FlowRowItem(text = "${videoItem.date}" , modifier = Modifier.background(color = Color.Transparent))
-                   }
-                   Spacer(modifier = Modifier.weight(1f))
-                   MoreVertMenu(
-                       onRename = {
-                           newName = videoItem.name
-                           showRenameDialog = true
-                       },
-                       onRemove = {
-                           showRemoveDialog = true
-
-                       },
-                       onShare = {
-                           showShareDialog = true
-                       },
-                       modifier = Modifier
-                           .background(color = Color(0xFF222831))
-                   )
-               }
-            }
-        // Rename Dialog
-        if (showRenameDialog) {
-            AlertDialog(
-                onDismissRequest = { showRenameDialog = false },
-                title = { Text(
-                    "Rename Video",
-                    color = Color(0xFFD9ACF5)
-                ) },
-                text = {
-                    TextField(
-                        value = newName,
-                        onValueChange = { newName = it },
-                        label = { Text("New Name") }
+                    Text(
+                        text = videoItem.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Start,
+                        maxLines = 2,
+                        fontSize = 12.sp,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .padding(start = 5.dp, top = 5.dp),
+                        color = Color.White
                     )
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            // Handle renaming logic here
-                            onRename(videoItem.copy(name = newName))
-                            showRenameDialog = false
-                        }
+            Spacer(modifier = Modifier.padding(1.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    FlowRow(
+                        modifier = Modifier
+                            .background(color = Color.Transparent)
                     ) {
-                        Text(
-                            "Rename",
-                            color = Color(0xFFD9ACF5)
+                        FlowRowItem(
+                            text = "${videoItem.size / 1000000} MB",
+                            modifier = Modifier.background(color = Color.Transparent)
+                        )
+                        FlowRowItem(
+                            text = videoItem.date,
+                            modifier = Modifier.background(color = Color.Transparent)
                         )
                     }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = { showRenameDialog = false }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.BottomEnd
                     ) {
-                        Text(
-                            "Cancel",
-                            color = Color.White
+                        MoreVertMenu(
+                            onRename = {
+                                newName = videoItem.name
+                                showRenameDialog = true
+                            },
+                            onRemove = {
+                                showRemoveDialog = true
+
+                            },
+                            onShare = {
+                                showShareDialog = true
+                            },
+                            modifier = Modifier
+                                .background(color = Color(0xFF222831))
+
                         )
                     }
-                },
-                containerColor = Color.Transparent,
-                modifier = Modifier.background(color = Color(0xFF222831))
-            )
-        }
+                }
+            }
+            }
 
         // Remove Dialog
         if (showRemoveDialog) {
@@ -282,7 +256,7 @@ private fun VideoGridItem(
                     TextButton(
                         onClick = {
                             // Handle removing logic here
-                            onRemove(videoItem)
+                            mainViewModel.deleteVideo(context, videoUri)
                             showRemoveDialog = false
                         }
                     ) {
@@ -348,7 +322,7 @@ private fun VideoGridItem(
             )
         }
     }
-}
+
 
 @Composable
 private fun FlowRowItem(
@@ -434,19 +408,6 @@ fun MoreVertMenu(
             .focusRequester(focusRequester)
             .background(Color(0xFF222831))
     ) {
-        DropdownMenuItem(
-            text = {
-                Text(
-                    "Rename",
-                    color = Color(0xFFD9ACF5)
-                )
-            },
-            onClick = {
-                onRename()
-                expanded = false
-
-            }
-        )
         DropdownMenuItem(
             text = {
                 Text(

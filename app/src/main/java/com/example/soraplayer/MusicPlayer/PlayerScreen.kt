@@ -1,5 +1,7 @@
 package com.example.soraplayer.MusicPlayer
 
+import android.content.Context
+import android.content.Intent
 import androidx.annotation.OptIn
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -7,7 +9,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,16 +19,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -35,17 +37,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import coil.compose.rememberAsyncImagePainter
+import com.example.soraplayer.Model.MusicItem
 import com.example.soraplayer.R
 import com.example.soraplayer.Utils.toHhMmSs
 import kotlinx.coroutines.delay
@@ -58,6 +65,8 @@ fun MusicPlayerScreen(
 ) {
     val musicPlayerState by viewModel.musicPlayerState.collectAsState()
     var showControls by remember { mutableStateOf(false) }
+    var showShareDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     LaunchedEffect(showControls) {
         if (showControls) {
@@ -95,31 +104,52 @@ fun MusicPlayerScreen(
                     )
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                IconButton(
-                    onClick = {},
-                ) {
-                    Icon(
-                        Icons.Default.Share,
-                        contentDescription = null,
-                        tint = Color.White,
-                    )
-                }
-                IconButton(
-                    onClick = {},
-                ) {
-                    Icon(
-                        Icons.Default.Star,
-                        contentDescription = null,
-                        tint = Color.White,
-                    )
-                }
-                IconButton(
-                    onClick = {},
-                ) {
-                    Icon(
-                        Icons.Default.MoreVert,
-                        contentDescription = null,
-                        tint = Color.White,
+                ShareDropDownMenu(
+                    onShare = {
+                        showShareDialog = true
+                    }
+                )
+
+                if (showShareDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showShareDialog = false },
+                        title = {
+                            Text(
+                                "Share Music",
+                                color = Color(0xFFD9ACF5)
+                            )
+                        },
+                        text = {
+                            Text(
+                                "Share this Music with others?",
+                                color = Color.White
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    shareMusic(context, musicPlayerState.currentTrack!!)
+                                    showShareDialog = false
+                                }
+                            ) {
+                                Text(
+                                    "Share",
+                                    color = Color(0xFFD9ACF5)
+                                )
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(
+                                onClick = { showShareDialog = false }
+                            ) {
+                                Text(
+                                    "Cancel",
+                                    color = Color.White
+                                )
+                            }
+                        },
+                        containerColor = Color.Transparent,
+                        modifier = Modifier.background(color = Color(0xFF222831))
                     )
                 }
 
@@ -290,6 +320,63 @@ fun TrackSlider(
             inactiveTrackColor = Color.DarkGray,
         )
     )
+}
+
+@Composable
+fun ShareDropDownMenu(
+    onShare: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    val focusRequester = remember {
+        FocusRequester()
+    }
+
+    IconButton(
+        onClick = {
+            expanded = true
+        },
+    ) {
+        Icon(
+            Icons.Default.Share,
+            contentDescription = null,
+            tint = Color.White,
+        )
+    }
+
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false },
+        modifier = Modifier
+            .focusRequester(focusRequester)
+            .background(color = MaterialTheme.colorScheme.background)
+    ) {
+        DropdownMenuItem(
+            text = {
+                Text(
+                    "Share",
+                    color = Color(0xFFD9ACF5)
+                )
+            },
+            onClick = {
+                expanded = false
+                onShare()
+            }
+        )
+    }
+
+}
+
+private fun shareMusic(context: Context, musicItem: MusicItem) {
+    val intent = Intent().apply {
+        action = Intent.ACTION_SEND
+        putExtra(Intent.EXTRA_STREAM, musicItem.uri)
+        type = "audio/*" // Adjust MIME type based on the file type
+    }
+    context.startActivity(Intent.createChooser(intent, "Share Music via"))
 }
 
 

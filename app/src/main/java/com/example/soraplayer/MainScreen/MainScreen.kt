@@ -1,7 +1,9 @@
 package com.example.soraplayer.MainScreen
 
 import android.annotation.SuppressLint
+import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.LinearEasing
@@ -33,10 +35,12 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -85,11 +89,13 @@ import com.example.soraplayer.Presentation.mainScreenComponents.VideoItemGridLay
 import com.example.soraplayer.Presentation.mainScreenComponents.VideoViewList
 import com.example.soraplayer.R
 import com.example.soraplayer.network_stream.NetworkStreamScreen
+import com.example.soraplayer.network_stream.RecentUrlManager
 import com.example.soraplayer.ui.theme.poppins
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshState
 import kotlinx.coroutines.launch
 
+@RequiresApi(Build.VERSION_CODES.Q)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,6 +113,8 @@ fun MainScreen(
 
     val context = LocalContext.current
 
+    val recentUrlManager = remember { RecentUrlManager(context) }
+
     val mainViewModel: MainViewModel = viewModel(factory = MainViewModel.factory)
 
     val videosViewStateFlow by mainViewModel.videoItemsStateFlow.collectAsState()
@@ -114,15 +122,19 @@ fun MainScreen(
     val musicViewStateFlow by mainViewModel.musicItemsStateFlow.collectAsState()
 
     var sortOrder by rememberSaveable {
-        mutableStateOf(SortOrder.Name)
+        mutableStateOf(SortOrder.Date)
     }
-    var sortDirection by rememberSaveable { mutableStateOf(SortDirection.Ascending) }
+    var sortDirection by rememberSaveable { mutableStateOf(SortDirection.Descending) }
 
     val ListState = rememberLazyListState()
     val gridState = rememberLazyStaggeredGridState()
 
-    var isGridLayout by rememberSaveable {
+    var isListLayout by rememberSaveable {
         mutableStateOf(true)
+    }
+
+    val onLayoutChange: (Boolean) -> Unit = { newLayout ->
+        isListLayout = newLayout
     }
     var isSearching by rememberSaveable { mutableStateOf(false) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
@@ -134,6 +146,7 @@ fun MainScreen(
                 SortOrder.Name -> videosViewStateFlow.sortedBy { it.name }
                 SortOrder.Date -> videosViewStateFlow.sortedBy { it.dateModified }
                 SortOrder.Size -> videosViewStateFlow.sortedBy { it.size }
+
             }
             val finalList = if (sortDirection == SortDirection.Descending) sortedList.reversed() else sortedList
             if (searchQuery.isNotBlank()) {
@@ -237,8 +250,9 @@ fun MainScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent
+                        containerColor = Color(0xFF222831)
                     ),
+
                     )
             } else {
                 TopAppBar(
@@ -284,16 +298,14 @@ fun MainScreen(
                         )
                         Spacer(modifier = Modifier.padding(6.dp))
                         LayoutChange(
-                            isGridLayout = isGridLayout,
-                            onLayoutChange = { isGridLayout = it },
+                            isListLayout = isListLayout,
+                            onLayoutChange =  onLayoutChange ,
                             modifier = Modifier
                         )
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        Color.Transparent
-
+                        containerColor = Color(0xFF222831)
                         ),
-
                 )
             }
 
@@ -301,11 +313,21 @@ fun MainScreen(
         bottomBar = {
             NavigationBar(
                 tonalElevation = 12.dp,
-                containerColor = Color.Transparent,
+                containerColor =  Color(0xFF222831),
+                modifier = Modifier
+                    .border(
+                    width = 0.2.dp,
+                    color = Color.DarkGray,
+                )
+                    .shadow(
+                        elevation = 12.dp,
+                        spotColor = Color(0xFF892CDC),
+                        ambientColor = Color(0xFF892CDC)
+                    )
             ){
                 NavigationBarItem(
                     colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = Color(0xFF222831)
+                        indicatorColor =  Color(0xFF892CDC)
                     ),
                     selected = bottomNavigationScreen == BottomNavigationScreens.VideosView,
                     label = { Text(
@@ -327,7 +349,7 @@ fun MainScreen(
                 )
                 NavigationBarItem(
                     colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = Color(0xFF222831)
+                        indicatorColor =  Color(0xFF892CDC)
                     ),
                     selected = bottomNavigationScreen == BottomNavigationScreens.FoldersView,
                     label = { Text(
@@ -433,7 +455,7 @@ fun MainScreen(
                 .background(color = Color(0xFF222831))
         ) { navScreen ->
             LaunchedEffect(sortOrder, sortDirection, bottomNavigationScreen) {
-                if (isGridLayout) {
+                if (isListLayout) {
                     gridState.scrollToItem(0)
                 } else {
                     ListState.scrollToItem(0)
@@ -443,20 +465,7 @@ fun MainScreen(
                 when (navScreen) {
 
                     BottomNavigationScreens.VideosView -> {
-                        if (isGridLayout) {
-                            VideoItemGridLayout(
-                                videoList = filteredVideos,
-                                onVideoItemClick = onVideoItemClick,
-                                scrollState = gridState,
-                                isRefreshing = isRefreshing,
-                                onRefresh = { mainViewModel.refreshData() },
-                                onRename = {  videoItem -> mainViewModel.renameVideo(videoItem.id, videoItem.name) },
-                                onRemove = { videoItem -> mainViewModel.removeVideo(videoItem.id) },
-                                modifier = Modifier
-                                    .background(color = Color(0xFF222831))
-                                    .padding(top = 70.dp, bottom = 120.dp),
-                            )
-                        } else {
+                        if (isListLayout) {
                             VideoViewList(
                                 videoList = filteredVideos,
                                 onVideoItemClick = onVideoItemClick,
@@ -465,7 +474,18 @@ fun MainScreen(
                                 onRefresh = { mainViewModel.refreshData() },
                                 modifier = Modifier
                                     .background(color = Color(0xFF222831))
-                                    .padding(top = 70.dp, bottom = 120.dp),
+                                    .padding(top = 70.dp),
+                            )
+                        } else {
+                            VideoItemGridLayout(
+                                videoList = filteredVideos,
+                                onVideoItemClick = onVideoItemClick,
+                                scrollState = gridState,
+                                isRefreshing = isRefreshing,
+                                onRefresh = { mainViewModel.refreshData() },
+                                modifier = Modifier
+                                    .background(color = Color(0xFF222831))
+                                    .padding(top = 70.dp),
                             )
                         }
 
@@ -488,21 +508,7 @@ fun MainScreen(
 
                                 FoldersVideosNavigation.FoldersScreen -> {
 
-                                    if(isGridLayout) {
-                                        FolderItemGridLayout(
-                                            foldersList = filteredFolders,
-                                            onFolderItemClick = {
-                                                mainViewModel.updateCurrentSelectedFolderItem(it)
-                                                foldersVideosNavigation =
-                                                    FoldersVideosNavigation.VideosScreen
-                                            },
-                                            isRefreshing = isRefreshing,
-                                            onRefresh = { mainViewModel.refreshData() },
-                                            modifier = Modifier
-                                                .background(color = Color(0xFF222831))
-                                                .padding(top = 50.dp, bottom = 120.dp)
-                                        )
-                                    } else {
+                                    if(isListLayout) {
                                         FolderItemListLayout(
                                             foldersList = filteredFolders,
                                             onFolderItemClick = {
@@ -514,7 +520,21 @@ fun MainScreen(
                                             onRefresh = { mainViewModel.refreshData() },
                                             modifier = Modifier
                                                 .background(color = Color(0xFF222831))
-                                                .padding(top = 50.dp, bottom = 50.dp)
+                                                .padding(top = 50.dp, ),
+                                        )
+                                    } else {
+                                        FolderItemGridLayout(
+                                            foldersList = filteredFolders,
+                                            onFolderItemClick = {
+                                                mainViewModel.updateCurrentSelectedFolderItem(it)
+                                                foldersVideosNavigation =
+                                                    FoldersVideosNavigation.VideosScreen
+                                            },
+                                            isRefreshing = isRefreshing,
+                                            onRefresh = { mainViewModel.refreshData() },
+                                            modifier = Modifier
+                                                .background(color = Color(0xFF222831))
+                                                .padding(top = 50.dp,)
                                         )
                                     }
 
@@ -526,20 +546,7 @@ fun MainScreen(
                                         foldersVideosNavigation =
                                             FoldersVideosNavigation.FoldersScreen
                                     }
-                                    if (isGridLayout) {
-                                        VideoItemGridLayout(
-                                            videoList = filteredFolderVideos,
-                                            onVideoItemClick = onVideoItemClick,
-                                            scrollState = gridState,
-                                            isRefreshing = isRefreshing,
-                                            onRefresh = { mainViewModel.refreshData() },
-                                            onRename = { videoItem -> mainViewModel.renameVideo(videoItem.id, videoItem.name)  },
-                                            onRemove = { videoItem -> mainViewModel.removeVideo(videoItem.id) },
-                                            modifier = Modifier
-                                                .padding(top = 70.dp, bottom = 120.dp)
-                                                .background(color = Color(0xFF222831))
-                                        )
-                                    } else {
+                                    if (isListLayout) {
                                         VideoViewList(
                                             videoList = filteredFolderVideos,
                                             onVideoItemClick = onVideoItemClick,
@@ -547,7 +554,18 @@ fun MainScreen(
                                             isRefreshing = isRefreshing,
                                             onRefresh = { mainViewModel.refreshData() },
                                             modifier = Modifier
-                                                .padding(top = 70.dp, bottom = 120.dp)
+                                                .padding(top = 70.dp)
+                                                .background(color = Color(0xFF222831))
+                                        )
+                                    } else {
+                                        VideoItemGridLayout(
+                                            videoList = filteredFolderVideos,
+                                            onVideoItemClick = onVideoItemClick,
+                                            scrollState = gridState,
+                                            isRefreshing = isRefreshing,
+                                            onRefresh = { mainViewModel.refreshData() },
+                                            modifier = Modifier
+                                                .padding(top = 70.dp)
                                                 .background(color = Color(0xFF222831))
                                         )
                                     }
@@ -557,32 +575,36 @@ fun MainScreen(
                         }
                     }
                     BottomNavigationScreens.MusicView -> {
-                        if (isGridLayout) {
-                            MusicGrid(
-                                musicTracks = filteredTracks,
-                                onItemClick = onMusicItemClick,
-                                modifier = Modifier
-                                    .padding(bottom = 120.dp)
-                            )
-                            } else {
+                        if (isListLayout) {
                             MusicList(
                                 musicTracks = filteredTracks,
                                 onItemClick = onMusicItemClick,
                                 modifier = Modifier
-                                    .padding(bottom = 120.dp)
+                            )
+                            } else {
+                            MusicGrid(
+                                musicTracks = filteredTracks,
+                                onItemClick = onMusicItemClick,
+                                modifier = Modifier
                             )
                         }
                     }
                     BottomNavigationScreens.NetworkStreamView -> {
                         NetworkStreamScreen(
                             onPlayStream = onPlayStream,
+                            recentUrlManager = recentUrlManager,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(color = Color(0xFF222831))
                         )
                     }
                     BottomNavigationScreens.MeView -> {
                         MeScreen(
                             isRefreshing = isRefreshing,
                             onRefresh = { mainViewModel.refreshData() },
-                            modifier = Modifier,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(color = Color(0xFF222831) ),
                         )
                     }
                 }
@@ -656,6 +678,12 @@ private fun SortAndLayoutDropdownMenu(
                        expanded = false
                    }
                )
+               HorizontalDivider(
+                   modifier = Modifier.padding(vertical = 4.dp),
+                   thickness = 1.dp,
+                   color = Color.Gray
+               )
+
                DropdownMenuItem(
                    onClick = {
                        onSortDirectionChanged(SortDirection.Ascending)
@@ -684,7 +712,7 @@ private fun SortAndLayoutDropdownMenu(
 
 @Composable
 fun LayoutChange(
-    isGridLayout: Boolean,
+    isListLayout: Boolean,
     onLayoutChange: (Boolean) -> Unit,
     modifier: Modifier
 ) {
@@ -692,41 +720,24 @@ fun LayoutChange(
         mutableStateOf(false)
     }
 
-    var focusRequester = remember {
+    val focusRequester = remember {
         FocusRequester()
     }
 
-    IconButton(onClick = { expanded = true }) {
+    IconButton(onClick = { onLayoutChange(!isListLayout) }) {
         Icon(
-            painter = painterResource(R.drawable.view_list_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+            painter =  painterResource(
+                if (isListLayout) {
+                    R.drawable.grid_view_24dp_e8eaed_fill0_wght400_grad0_opsz24// List icon
+                } else {
+                    R.drawable.view_list_24dp_e8eaed_fill0_wght400_grad0_opsz24 // Replace with your grid icon resource
+                }
+            ),
             contentDescription = "Layout",
             tint = Color(0xFFD9ACF5),
         )
     }
-    DropdownMenu(
-        expanded = expanded,
-        onDismissRequest = { expanded = false },
-        modifier = Modifier
-            .focusRequester(focusRequester)
-            .background(color = Color(0xFF222831))
-    ) {
-        DropdownMenuItem(
-            text = {
-                Text(
-                    if (isGridLayout) {
-                        "Switch to List View"
-                    } else {
-                        "Switch to Grid View"
-                    },
-                    color = Color(0xFFD9ACF5)
-                )
-            },
-            onClick = {
-                onLayoutChange(!isGridLayout)
-                expanded = false
-            }
-        )
-    }
+
 }
 
 

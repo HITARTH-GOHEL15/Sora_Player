@@ -1,94 +1,82 @@
 package com.example.soraplayer.setting_screen
 
+import android.app.Activity
+import android.content.Context
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.Alignment
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
-fun SettingsScreen(
-    settingsViewModel: SettingsViewModel = viewModel()
-) {
-    val language by settingsViewModel.language.collectAsState()
-    val isDarkMode by settingsViewModel.isDarkMode.collectAsState()
-    val isClipboardPromptEnabled by settingsViewModel.isClipboardPromptEnabled.collectAsState()
+fun SettingsScreen(activity: Activity, context: Context, viewModel: SettingsViewModel = viewModel()) {
+    // Collect state from the ViewModel
+    val selectedLanguage by viewModel.selectedLanguage.collectAsState()
+    val isDarkModeEnabled by viewModel.isDarkModeEnabled.collectAsState()
+    val clipboardPromptEnabled by viewModel.clipboardPromptEnabled.collectAsState()
+
+    val languages = listOf("en", "es", "fr", "de")
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // Language Selection
-        Text(text = "Language", style = MaterialTheme.typography.titleLarge)
-        Spacer(modifier = Modifier.height(8.dp))
-        LanguageDropdown(
-            selectedLanguage = language,
-            onLanguageChange = { settingsViewModel.changeLanguage(it) }
-        )
+        Text("Settings", style = MaterialTheme.typography.titleLarge)
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        // Dark Mode Toggle
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("Dark Mode", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
-            Switch(
-                checked = isDarkMode,
-                onCheckedChange = { settingsViewModel.toggleDarkMode(it) }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Clipboard Prompt Toggle
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("Enable Clipboard Prompt", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
-            Switch(
-                checked = isClipboardPromptEnabled,
-                onCheckedChange = { settingsViewModel.toggleClipboardPrompt(it) }
-            )
-        }
-    }
-}
-
-
-@Composable
-fun LanguageDropdown(
-    selectedLanguage: String,
-    onLanguageChange: (String) -> Unit
-) {
-    val languages = listOf("English", "Spanish", "French", "German", "Chinese")
-    var expanded by remember { mutableStateOf(false) }
-
-    Box(modifier = Modifier.fillMaxWidth()) {
-        Button(
-            onClick = { expanded = true },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(text = selectedLanguage)
-        }
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            languages.forEach { language ->
-                DropdownMenuItem(
-                    text = { Text(language) },
-                    onClick = {
-                        onLanguageChange(language)
-                        expanded = false
-                    }
-                )
+        // Dropdown for language selection
+        Text("Select Language")
+        var expanded by remember { mutableStateOf(false) }
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
+                Text(selectedLanguage)
             }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                viewModel.languages.forEach { language ->
+                    DropdownMenuItem(
+                        text = { Text(text = language) }, // Corrected here
+                        onClick = {
+                            viewModel.changeLanguage(context , language, activity)  // Pass context here
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Toggle for dark mode
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("Dark Mode")
+            Switch(
+                checked = isDarkModeEnabled,
+                onCheckedChange = { viewModel.toggleDarkMode(it) }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Toggle for clipboard prompt
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("Clipboard Prompt")
+            Switch(
+                checked = clipboardPromptEnabled,
+                onCheckedChange = { viewModel.toggleClipboardPrompt(it) }
+            )
         }
     }
 }

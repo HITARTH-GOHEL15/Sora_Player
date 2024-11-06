@@ -1,6 +1,14 @@
 package com.example.soraplayer.Player
 
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -13,11 +21,13 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.common.util.UnstableApi
+import com.example.soraplayer.MainScreen.MainViewModel
 import com.example.soraplayer.ui.theme.SoraPlayerTheme
 
 @UnstableApi
@@ -33,8 +43,8 @@ class PlayerActivity: ComponentActivity() {
 
         handleIntent(intent)
 
-
-
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        orientationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)!!
 
         setContent {
             SoraPlayerTheme(
@@ -46,8 +56,9 @@ class PlayerActivity: ComponentActivity() {
                         onRotateScreenClick = {
                             playerViewModel.onRotateScreen()
                             requestedOrientation = playerViewModel.playerState.value.orientation
-                        },
-                        onBackClick = { finish() }
+                                              },
+                        onBackClick = { finish() },
+                        activity = this
                     )
                 }
             }
@@ -141,15 +152,61 @@ class PlayerActivity: ComponentActivity() {
         }
     }
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val orientation = if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT
+        }
+        playerViewModel.updateOrientation(orientation)
+        requestedOrientation = orientation
+    }
+
+    private lateinit var sensorManager: SensorManager
+    private lateinit var orientationSensor: Sensor
+    private val orientationListener = object : SensorEventListener {
+        override fun onSensorChanged(event: SensorEvent) {
+            if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
+                val x = event.values[0]
+                val y = event.values[1]
+
+                // Check if rotation is locked
+                if (playerViewModel.isRotationLocked.value == true) {
+                    // Do not change orientation if locked
+                    return
+                }
+
+                val orientation = if (Math.abs(x) > Math.abs(y)) {
+                    if (x > 0) ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE
+                } else {
+                    ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT
+                }
+                playerViewModel.updateOrientation(orientation)
+                requestedOrientation = orientation
+            }
+        }
+
+        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+            // Not used
+        }
+    }
+
+
+
+
 
     override fun onPause() {
         playerViewModel.playPauseOnActivityLifeCycleEvents(shouldPause = true)
         super.onPause()
+        sensorManager.unregisterListener(orientationListener)
     }
 
     override fun onResume() {
         playerViewModel.playPauseOnActivityLifeCycleEvents(shouldPause = false)
         super.onResume()
+        sensorManager.registerListener(orientationListener, orientationSensor, SensorManager.SENSOR_DELAY_NORMAL)
+
     }
 
     companion object {

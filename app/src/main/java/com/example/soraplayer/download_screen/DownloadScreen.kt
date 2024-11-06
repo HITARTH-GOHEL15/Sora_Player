@@ -8,6 +8,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.annotation.OptIn
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,10 +23,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
 import com.example.soraplayer.Player.PlayerActivity
 import com.example.soraplayer.R
+import com.example.soraplayer.ui.theme.poppins
 
 @OptIn(UnstableApi::class)
 @Composable
-fun DownloadsScreen(context: Context) {
+fun DownloadsScreen(context: Context , modifier: Modifier) {
     var url by remember { mutableStateOf("") }
 
     val viewModel: DownloadViewModel = viewModel(
@@ -37,14 +40,25 @@ fun DownloadsScreen(context: Context) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(color = Color(0xFF222831))
             .padding(16.dp)
     ) {
         // Input field for URL
-        TextField(
+        OutlinedTextField(
             value = url,
             onValueChange = { url = it },
-            label = { Text("Enter Download URL") },
-            modifier = Modifier.fillMaxWidth()
+            label = { Text(
+                "Enter Download URL",
+                color = Color.White
+            ) },
+            modifier = Modifier
+                .fillMaxWidth()
+            ,
+            colors = TextFieldDefaults.colors(
+                focusedIndicatorColor = Color(0xFF892CDC),
+                unfocusedIndicatorColor = Color.Transparent,
+                cursorColor = Color(0xFF892CDC),
+            ),
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -57,7 +71,11 @@ fun DownloadsScreen(context: Context) {
                     url = ""  // Clear the field
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF892CDC),
+                contentColor = Color.White
+            )
         ) {
             Text("Add Download")
         }
@@ -65,7 +83,11 @@ fun DownloadsScreen(context: Context) {
         Spacer(modifier = Modifier.height(24.dp))
 
         // List of current downloads
-        Text(text = "Current Downloads", style = MaterialTheme.typography.titleLarge)
+        Text(
+            text = "Current Downloads",
+            style = MaterialTheme.typography.titleLarge,
+            fontFamily = poppins
+        )
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -107,35 +129,45 @@ fun DownloadItemRow(
             .padding(vertical = 8.dp),
     ) {
         Column {
-            Text(text = download.url, maxLines = 1, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = download.url,
+                maxLines = 1,
+                style = MaterialTheme.typography.bodyLarge,
+                fontFamily = poppins,
+                color = Color.White
+            )
             LinearProgressIndicator(
                 progress = { download.progress / 100f },
                 modifier = Modifier.fillMaxWidth(),
+                color = Color(0xFF892CDC),
+                trackColor = Color.Gray
             )
             Text(
                 text = "${download.progress}% - ${downloadStatusToString(download.status)}",
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodySmall,
+                fontFamily = poppins,
+                color = Color.White
             )
         }
 
         Row {
             // Conditionally display the pause or resume icon based on download status
             IconButton(
-                onClick = onPauseClick,
+                onClick = onPauseClick
             ) {
                 if (download.status == DownloadManager.STATUS_RUNNING) {
                     // Show pause icon when download is running
                     Icon(
                         painter = painterResource(id = R.drawable.pause_24dp_e8eaed_fill0_wght400_grad0_opsz24),
                         contentDescription = "Pause",
-                        tint = Color.Black
+                        tint = Color.White
                     )
                 } else if (download.status == DownloadManager.STATUS_PAUSED || download.status == DownloadManager.STATUS_FAILED) {
                     // Show resume icon when download is paused or failed
                     Icon(
                         painter = painterResource(id = R.drawable.play_arrow_24dp_e8eaed_fill0_wght400_grad0_opsz24),
                         contentDescription = "Resume",
-                        tint = Color.Black
+                        tint = Color.White
                     )
                 }
             }
@@ -147,7 +179,7 @@ fun DownloadItemRow(
                 Icon(
                     painter = painterResource(id = R.drawable.delete_24dp_e8eaed_fill0_wght400_grad0_opsz24),
                     contentDescription = "Delete",
-                    tint = Color.Black
+                    tint = Color.White
                 )
             }
 
@@ -159,7 +191,7 @@ fun DownloadItemRow(
                     Icon(
                         painter = painterResource(id = R.drawable.play_arrow_24dp_e8eaed_fill0_wght400_grad0_opsz24),
                         contentDescription = "Play",
-                        tint = Color.Black
+                        tint = Color.White
                     )
                 }
             }

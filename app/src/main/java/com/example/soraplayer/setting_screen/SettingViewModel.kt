@@ -1,37 +1,85 @@
 package com.example.soraplayer.setting_screen
 
-
+import android.app.Activity
+import android.content.Context
+import android.content.res.Configuration
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import java.util.Locale
 
-class SettingsViewModel : ViewModel() {
+class SettingsViewModel(context: Context) : ViewModel() {
 
-    // State for Language Selection
-    private val _language = MutableStateFlow("English") // Default language
-    val language = _language.asStateFlow()
+    // Language options
+    val languages = listOf("English", "Spanish", "French")
 
-    // State for Dark Mode
-    private val _isDarkMode = MutableStateFlow(false) // Default is light mode
-    val isDarkMode = _isDarkMode.asStateFlow()
+    // State variables for settings
+    private val _selectedLanguage = MutableStateFlow("English")  // Default language
+    val selectedLanguage = _selectedLanguage.asStateFlow()
 
-    // State for Clipboard Prompt
-    private val _isClipboardPromptEnabled = MutableStateFlow(true) // Default is enabled
-    val isClipboardPromptEnabled = _isClipboardPromptEnabled.asStateFlow()
+    private val _isDarkModeEnabled = MutableStateFlow(false)  // Default to Light Mode
+    val isDarkModeEnabled = _isDarkModeEnabled.asStateFlow()
 
-    // Functions to change settings
-    fun changeLanguage(newLanguage: String) {
-        _language.value = newLanguage
-        // Save to persistent storage if necessary (e.g., DataStore/SharedPreferences)
+    private val _clipboardPromptEnabled = MutableStateFlow(true)  // Default to enabled
+    val clipboardPromptEnabled = _clipboardPromptEnabled.asStateFlow()
+
+    // Function to change language
+    fun changeLanguage(context: Context, languageCode: String, activity: Activity) {
+        val locale = Locale(languageCode)
+        Locale.setDefault(locale)
+
+        val config = Configuration(context.resources.configuration)
+        config.setLocale(locale)
+
+        context.resources.updateConfiguration(config, context.resources.displayMetrics)
+
+        // Persist language change if necessary
+
+        // Restart activity to apply the new language
+        activity.recreate()
     }
 
-    fun toggleDarkMode(isEnabled: Boolean) {
-        _isDarkMode.value = isEnabled
-        // Save to persistent storage if necessary
+
+    // Function to toggle dark mode
+    fun toggleDarkMode(enabled: Boolean) {
+        _isDarkModeEnabled.value = enabled
     }
 
-    fun toggleClipboardPrompt(isEnabled: Boolean) {
-        _isClipboardPromptEnabled.value = isEnabled
-        // Save to persistent storage if necessary
+    fun updateAppLanguage(context: Context, language: String) {
+        val locale = when (language) {
+            "Spanish" -> Locale("es")
+            "French" -> Locale("fr")
+            else -> Locale("en")
+        }
+
+        Locale.setDefault(locale)
+        val config = Configuration()
+        config.setLocale(locale)
+        context.resources.updateConfiguration(config, context.resources.displayMetrics)
+    }
+
+    // Function to toggle clipboard prompt
+    fun toggleClipboardPrompt(enabled: Boolean) {
+        _clipboardPromptEnabled.value = enabled
     }
 }
+
+class SettingsViewModelFactory(
+    private val context: Context
+) : ViewModelProvider.Factory {
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
+            return SettingsViewModel(context) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
+
+
+

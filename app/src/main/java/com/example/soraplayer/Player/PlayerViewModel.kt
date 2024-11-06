@@ -3,9 +3,14 @@ package com.example.soraplayer.Player
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.ActivityInfo
+import android.media.AudioManager
 import android.media.audiofx.LoudnessEnhancer
 import android.net.Uri
 import android.util.Log
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewmodel.initializer
@@ -13,8 +18,11 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
@@ -23,29 +31,71 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import com.example.soraplayer.Data.LocalMediaProvider
 import com.example.soraplayer.Model.VideoItem
 import com.example.soraplayer.MyApplication
+import com.example.soraplayer.Player.PlayerActivity.Companion.TAG
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.util.UUID
+import android.provider.Settings
 
 @UnstableApi
 class PlayerViewModel(
-    @SuppressLint("StaticFieldLeak") private val context: Context,
+    @SuppressLint("StaticFieldLeak") val context: Context,
     val player: ExoPlayer,
     private val mediaSession: androidx.media3.session.MediaSession,
-    private val loudnessEnhancer: LoudnessEnhancer,
+    private var loudnessEnhancer: LoudnessEnhancer,
     private val listener: Player.Listener,
     private val localMediaProvider: LocalMediaProvider,
 ): ViewModel() {
 
     private val _playerState = MutableStateFlow(PlayerState())
     val playerState = _playerState.asStateFlow()
+    // Subtitle toggle
+    var brightness = mutableStateOf(0.5f)
+    var volumeLevel = mutableStateOf(0.5f)
 
     init {
+        player.addListener(listener)
         player.prepare().also {
             Log.d(TAG, "viewModel created and player is prepared")
         }
     }
+    // Enhanced error handling in Player Listener
+    private val playerListener = object : Player.Listener {
+        override fun onPlayerError(error: PlaybackException) {
+            super.onPlayerError(error)
+            Log.e(TAG, "Playback error: ${error.message}")
+            if (error.errorCode == PlaybackException.ERROR_CODE_IO_UNSPECIFIED) {
+                Log.e(TAG, "Source error: Check URI or network availability.")
+            }
+        }
+
+        // Volume and audio session updates
+        override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) {
+            super.onDeviceVolumeChanged(volume, muted)
+            player.volume = volume.toFloat()
+        }
+
+        override fun onAudioSessionIdChanged(audioSessionId: Int) {
+            super.onAudioSessionIdChanged(audioSessionId)
+            try {
+                loudnessEnhancer.release()
+                loudnessEnhancer = LoudnessEnhancer(audioSessionId)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error initializing LoudnessEnhancer: ${e.message}")
+            }
+        }
+    }
+
+    private val _isRotationLocked = MutableLiveData(false) // Lock rotation state
+    val isRotationLocked: LiveData<Boolean> get() = _isRotationLocked
+
+    // Function to toggle the lock rotation state
+    fun toggleRotationLock() {
+        _isRotationLocked.value = !(_isRotationLocked.value ?: false)
+    }
+
+    // New function to set custom orientation
 
     override fun onCleared() {
         player.removeListener(listener)
@@ -59,13 +109,20 @@ class PlayerViewModel(
     private fun updateCurrentVideoItem(videoItem: VideoItem){
         _playerState.update {
             it.copy(
-                currentVideoItem = videoItem
+                currentVideoItem = videoItem,
             )
         }
         setMediaItem(_playerState.value.currentVideoItem!!.uri)
     }
 
+
+
     private fun setMediaItem(uri: Uri) {
+        Log.d(TAG, "Setting media item: $uri")
+        if (uri.scheme == null || uri.host == null) {
+            Log.e(TAG, "Invalid URI: $uri")
+            return
+        }// Log the URI
         player.apply {
             clearMediaItems()
             addMediaItem(MediaItem.fromUri(uri)) // Load the video from the given URI
@@ -129,9 +186,28 @@ class PlayerViewModel(
         }
     }
 
+    fun updateOrientation(orientation: Int) {
+        _playerState.update {
+            it.copy(orientation = orientation)
+        }
+    }
+
+    fun toggleSubtitles() {
+        val trackSelector = player.trackSelector as DefaultTrackSelector
+        player.trackSelectionParameters = trackSelector.parameters
+        val hasSubtitles = trackSelector.currentMappedTrackInfo != null
+        val parameters = if (hasSubtitles) {
+            trackSelector.parameters.buildUpon().setRendererDisabled(C.TRACK_TYPE_TEXT, false).build()
+        } else {
+            trackSelector.parameters.buildUpon().setRendererDisabled(C.TRACK_TYPE_TEXT, true).build()
+        }
+        trackSelector.parameters = parameters
+    }
+
     fun onIntent(uri: Uri) {
             // Check if the URI is a web URL (http/https) or a local file (content/file)
         // Check if the URI is a web URL (http/https) or a local file (content/file)
+        Log.d(TAG, "Received URI intent: $uri")
         if (uri.scheme == "http" || uri.scheme == "https") {
             // It's an internet URL, set the media item directly
             setMediaItem(uri)
@@ -156,6 +232,7 @@ class PlayerViewModel(
 
     fun onIntentFromDeepLink(slug: String, timestamp: Int?) {
         val mediaUri = Uri.parse("https://sora-player.web.app/play/$slug")
+        Log.d(TAG, "Attempting to play media from: $mediaUri")
         setMediaItem(mediaUri)
         timestamp?.let {
             player.seekTo(it * 1000L)
@@ -182,7 +259,9 @@ class PlayerViewModel(
                     .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
 
                 val loadControl = DefaultLoadControl.Builder()
-                    .setBufferDurationsMs(32_000, 64_000, 1_000, 5_000)
+                    .setBufferDurationsMs(
+                        32_000, 64_000, 1_000, 5_000
+                    )
                     .build()
 
                 val trackSelector = DefaultTrackSelector(context).apply {
@@ -223,6 +302,13 @@ class PlayerViewModel(
                             e.printStackTrace()
                         }
                     }
+
+                    override fun onPlayerError(error: PlaybackException) {
+                        super.onPlayerError(error)
+                        Log.e(TAG, "Playback error: ${error.message}")
+                    }
+
+
                 }
 
                 player.addListener(listener)
@@ -246,5 +332,5 @@ data class PlayerState(
     val isPlaying: Boolean = false,
     val currentVideoItem: VideoItem? = null,
     val resizeMode: Int = AspectRatioFrameLayout.RESIZE_MODE_FIT,
-    val orientation: Int = ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE
+    val orientation: Int = ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE,
 )

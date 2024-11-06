@@ -30,22 +30,29 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 
 
+@SuppressLint("ObsoleteSdkInt")
 @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun RequestMediaPermission(
     appContent: @Composable () -> Unit,
 ) {
-    // Combine audio and video permissions for Android 13+ (Tiramisu)
-    val permissionsList = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        listOf(
+    // Define permissions based on Android version
+    val permissionsList = when {
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> listOf(
             android.Manifest.permission.READ_MEDIA_AUDIO,
             android.Manifest.permission.READ_MEDIA_VIDEO,
             android.Manifest.permission.FOREGROUND_SERVICE,
             android.Manifest.permission.POST_NOTIFICATIONS
         )
-    } else {
-        listOf(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> listOf(
+            android.Manifest.permission.READ_EXTERNAL_STORAGE,
+            android.Manifest.permission.FOREGROUND_SERVICE,
+            android.Manifest.permission.POST_NOTIFICATIONS
+        )
+        else -> listOf(
+            android.Manifest.permission.READ_EXTERNAL_STORAGE
+        )
     }
 
     // Create permission state for multiple permissions

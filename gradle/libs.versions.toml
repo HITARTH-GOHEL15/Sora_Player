@@ -2,9 +2,11 @@
 accompanistPermissions = "0.28.0"
 accompanistSwiperefresh = "<latest-version>"
 accompanistSwiperefreshVersion = "0.27.0"
-agp = "8.7.0"
+agp = "8.8.0-alpha08"
 coilCompose = "2.0.0"
+coilComposeVersion = "2.1.0"
 compiler = "4.15.1"
+converterGson = "2.9.0"
 firebaseBom = "33.3.0"
 glide = "4.16.0"
 googleHiltAndroid = "2.49"
@@ -27,6 +29,7 @@ composeBom = "2024.06.00"
 media3Exoplayer = "1.4.0"
 media3ExoplayerHls = "1.4.1"
 medialibrary = "0.9.10"
+retrofit = "2.9.0"
 runtimeLivedata = "1.6.8"
 appcompat = "1.7.0"
 vlcAndroidSdk = "3.4.6"
@@ -45,7 +48,9 @@ androidx-media3-exoplayer-hls = { module = "androidx.media3:media3-exoplayer-hls
 androidx-media3-session = { module = "androidx.media3:media3-session", version.ref = "media3Exoplayer" }
 androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3Exoplayer" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
+coil-compose-v210 = { module = "io.coil-kt:coil-compose", version.ref = "coilComposeVersion" }
 compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "compiler" }
+converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 dagger-hilt-android-v244 = { module = "com.google.dagger:hilt-android", version.ref = "googleHiltAndroid" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
@@ -73,6 +78,7 @@ libvlc-all = { module = "org.videolan.android:libvlc-all", version.ref = "libvlc
 androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 medialibrary = { module = "org.videolan.android:medialibrary", version.ref = "medialibrary" }
+retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 vlc-android-sdk = { module = "org.videolan.android:vlc-android-sdk", version.ref = "vlcAndroidSdk" }
 
 [plugins]
