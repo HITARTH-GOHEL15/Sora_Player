@@ -1,10 +1,13 @@
 package com.example.soraplayer.MusicPlayer
 
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -18,21 +21,22 @@ import com.example.soraplayer.Model.MusicItem
 import com.example.soraplayer.MusicPlayer.MusicService.MusicService
 import com.example.soraplayer.Player.PlayerActivity
 import com.example.soraplayer.Player.PlayerActivity.Companion
+import com.example.soraplayer.R
 import com.example.soraplayer.ui.theme.SoraPlayerTheme
 
 @UnstableApi
 class MusicPlayerActivity : ComponentActivity() {
 
     private val musicPlayerViewModel by viewModels<MusicPlayerViewModel>(factoryProducer = { MusicPlayerViewModel.factory })
+    private val position = intent?.getLongExtra("CURRENT_POSITION", 0L) ?: 0L
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        startMusicService()
+
 
         handleIntent(intent)
-
 
 
 
@@ -41,21 +45,15 @@ class MusicPlayerActivity : ComponentActivity() {
             SoraPlayerTheme {
                 MusicPlayerScreen(
                     viewModel = musicPlayerViewModel,
-                    onBackClick = { finish() },
+                    onBackClick = { finish(
+                    ) },
                 )
             }
         }
     }
 
-    private fun startMusicService() {
-        Intent(this, MusicService::class.java).also { intent ->
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(intent)
-            } else {
-                startService(intent)
-            }
-        }
-    }
+
+
 
 
 
@@ -67,6 +65,7 @@ class MusicPlayerActivity : ComponentActivity() {
 
     private fun handleIntent(intent: Intent?) {
         val intentUri = intent?.data
+        val position = intent?.getLongExtra("CURRENT_POSITION", 0L) ?: 0L
 
         // Handle deep link
         if (intentUri != null) {
@@ -78,6 +77,12 @@ class MusicPlayerActivity : ComponentActivity() {
         if (intent?.action == Intent.ACTION_SEND) {
             handleShareIntent(intent)
         }
+
+        if(position > 0) {
+            musicPlayerViewModel.setPlaybackPosition(position)
+
+        }
+
     }
 
     private fun handleDeepLink(uri: Uri?) {
@@ -136,6 +141,8 @@ class MusicPlayerActivity : ComponentActivity() {
            }
        }
    }
+
+
 
 
     override fun onPause() {

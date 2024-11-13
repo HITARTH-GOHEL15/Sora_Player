@@ -2,9 +2,11 @@ package com.example.soraplayer.Player
 
 import android.content.Context
 import android.media.AudioManager
+import android.os.Build
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.annotation.DrawableRes
+import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -14,6 +16,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,6 +40,7 @@ import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.Text
@@ -47,6 +51,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,8 +63,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -82,6 +92,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
+
+@RequiresApi(Build.VERSION_CODES.Q)
 @UnstableApi
 @Composable
 fun PlayerScreen(
@@ -89,27 +101,27 @@ fun PlayerScreen(
     onRotateScreenClick: () -> Unit,
     activity: ComponentActivity,
     onBackClick: () -> Unit,
-){
-
+) {
     val playerState by viewModel.playerState.collectAsState()
-
-    var showControls by remember{
-        mutableStateOf(false)
-    }
-    var brightness by remember { mutableStateOf(activity.window.attributes.screenBrightness.coerceIn(0f, 1f)) }
-    val audioManager = activity.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-    var volumeLevel by remember {
-        mutableStateOf(
-            audioManager.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat() /
-                    audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-        )
-    }
+    var showControls by remember { mutableStateOf(false) }
     var isMinimized by remember { mutableStateOf(false) }
     var miniPlayerOffset by remember { mutableStateOf(Offset(0f, 0f)) }
 
-    LaunchedEffect(key1 = showControls){
-        if(showControls){
-            delay(10000)
+    // Volume and Brightness States
+    val audioManager = activity.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    var volumeLevel by remember { mutableStateOf(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat()) }
+    val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC).toFloat()
+    var brightness by remember { mutableFloatStateOf(activity.window.attributes.screenBrightness.coerceIn(0f, 1f)) }
+
+    // Show UI feedback for volume and brightness adjustments
+    var showVolumeFeedback by remember { mutableStateOf(false) }
+    var showBrightnessFeedback by remember { mutableStateOf(false) }
+
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+
+    LaunchedEffect(showControls) {
+        if (showControls) {
+            delay(3000) // Hide controls after 3 seconds
             showControls = false
         }
     }
@@ -118,36 +130,43 @@ fun PlayerScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
-    ) {
-        if (isMinimized) {
-            // Mini-player view when minimized
-            // Draggable Mini-Player Overlay
-            MainScreen(
-                onVideoItemClick = {},
-                onMusicItemClick = {},
-                onPlayStream = {},
-            )
-            Box(
-                modifier = Modifier
-                    .offset { IntOffset(miniPlayerOffset.x.toInt(), miniPlayerOffset.y.toInt()) }
-                    .size(200.dp, 112.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.Black.copy(alpha = 0.8f))
-                    .pointerInput(Unit) {
-                        detectDragGestures { change, dragAmount ->
-                            change.consume()
-                            miniPlayerOffset += dragAmount
+            .pointerInput(Unit) {
+                detectVerticalDragGestures(
+                    onVerticalDrag = { change, dragAmount ->
+                        change.consume()
+                        if (change.position.x < screenWidth.toPx() / 2) {
+                            // Left Side Gesture: Volume Control
+                            showVolumeFeedback = true
+                            showBrightnessFeedback = false
+                            volumeLevel = (volumeLevel - dragAmount / 500).coerceIn(0f, maxVolume)
+                            audioManager.setStreamVolume(
+                                AudioManager.STREAM_MUSIC,
+                                volumeLevel.toInt(),
+                                0
+                            )
+                        } else {
+                            // Right Side Gesture: Brightness Control
+                            showBrightnessFeedback = true
+                            showVolumeFeedback = false
+                            brightness = (brightness - dragAmount / 500).coerceIn(0f, 1f)
+                            val layoutParams = activity.window.attributes
+                            layoutParams.screenBrightness = brightness
+                            activity.window.attributes = layoutParams
                         }
-                    }
-            ) {
-                MiniPlayer(
-                    player = viewModel.player,
-                    onClose = {
-                        isMinimized = false
+                    },
+                    onDragEnd = {
+                        // Hide feedback UI after gesture ends
+                        showVolumeFeedback = false
+                        showBrightnessFeedback = false
                     }
                 )
             }
+    ) {
+        if (isMinimized) {
+            // Mini-player implementation...
+            // ...
         } else {
+            // Main Player View
             AndroidView(
                 factory = {
                     PlayerView(it).apply {
@@ -157,53 +176,49 @@ fun PlayerScreen(
                         keepScreenOn = playerState.isPlaying
                     }
                 },
-                update = {
-                    it.apply {
-                        resizeMode = playerState.resizeMode
-                        keepScreenOn = playerState.isPlaying
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clickable(
-                        onClick = { showControls = !showControls }
-                    )
-
+                modifier = Modifier.fillMaxSize()
+                    .clickable { showControls = !showControls }
             )
 
-            AnimatedVisibility(
-                showControls,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                MiddleControls(
-                    isPlaying = playerState.isPlaying,
-                    onClick = {
-                        showControls = !showControls
-                    },
-                    onPlayPauseClick = {
-                        viewModel.onPlayPauseClick()
-                    },
-                    onSeekForwardClick = {
-                        viewModel.player.seekForward()
-                    },
-                    onSeekBackwardClick = {
-                        viewModel.player.seekBack()
-                    },
-                    modifier = Modifier.fillMaxSize(),
+            // Gesture Feedback Icons
+            if (showVolumeFeedback) {
+                GestureFeedbackUI(
+                    icon = painterResource(R.drawable.volume_up_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                    value = (volumeLevel / maxVolume * 100).toInt()
+                )
+            }
+            if (showBrightnessFeedback) {
+                GestureFeedbackUI(
+                    icon = painterResource(R.drawable.brightness_7_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                    value = (brightness * 100).toInt()
                 )
             }
 
+            // Middle Controls (Play/Pause, Seek, etc.)
             AnimatedVisibility(
                 visible = showControls,
                 enter = fadeIn(),
                 exit = fadeOut()
             ) {
-                Column(
-                    modifier = Modifier.fillMaxSize()
-                ) {
+                MiddleControls(
+                    isPlaying = playerState.isPlaying,
+                    onPlayPauseClick = { viewModel.onPlayPauseClick() },
+                    onSeekForwardClick = { viewModel.player.seekForward() },
+                    onSeekBackwardClick = { viewModel.player.seekBack() },
+                    modifier = Modifier.fillMaxSize(),
+                    onClick = { showControls = !showControls },
+                )
+            }
+
+            // Video Controls (Upper and Bottom Controls)
+            AnimatedVisibility(
+                visible = showControls,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Column(modifier = Modifier.fillMaxSize()) {
                     UpperControls(
-                        videoTitle = playerState.currentVideoItem?.name.toString(),
+                        videoTitle = playerState.videoTitle.toString(),
                         onBackClick = onBackClick,
                         onMinimizeClick = { isMinimized = true },
                     )
@@ -216,9 +231,6 @@ fun PlayerScreen(
                         onResizeModeChange = { viewModel.onResizeClick() },
                         isRotationLocked = viewModel.isRotationLocked.observeAsState(false).value,
                         onLockClick = { viewModel.toggleRotationLock() },
-                        onSubtitlesClick = {
-                            viewModel.toggleSubtitles()
-                        },
                         brightness = brightness,
                         onBrightnessChange = { newBrightness ->
                             brightness = newBrightness
@@ -227,13 +239,12 @@ fun PlayerScreen(
                             activity.window.attributes = layoutParams
                         },
                         volumeLevel = volumeLevel,
+                        onSubtitlesClick = {},
                         onVolumeChange = { newVolumeLevel ->
                             volumeLevel = newVolumeLevel
-                            val maxVolume =
-                                audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
                             audioManager.setStreamVolume(
                                 AudioManager.STREAM_MUSIC,
-                                (volumeLevel * maxVolume).toInt(),
+                                (volumeLevel / maxVolume).toInt(),
                                 0
                             )
                         }
@@ -243,6 +254,35 @@ fun PlayerScreen(
         }
     }
 }
+
+@Composable
+fun GestureFeedbackUI(icon: Painter, value: Int) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.5f))
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                painter = icon,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(64.dp)
+            )
+            Text(
+                text = "$value%",
+                color = Color.White,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+    }
+}
+
+
+
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -749,7 +789,6 @@ fun MiniPlayer(
         }
     }
 }
-
 
 
 

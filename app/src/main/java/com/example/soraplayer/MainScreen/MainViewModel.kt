@@ -18,21 +18,27 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.media3.common.util.UnstableApi
 import com.example.soraplayer.Data.LocalMusicProvider
+import com.example.soraplayer.Model.MinimizedPlayerState
+import com.example.soraplayer.MusicPlayer.MusicPlayerViewModel
 import com.example.soraplayer.Player.PlayerActivity.Companion.TAG
+import com.example.soraplayer.Player.PlayerViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+@UnstableApi
 class MainViewModel(
    private val  localMediaProvider: LocalMediaProvider,
     private val localMusicProvider: LocalMusicProvider
@@ -41,6 +47,7 @@ class MainViewModel(
     private var pendingRenameUri: Uri? = null
     private var pendingNewName: String? = null
     private var pendingDeleteUri: Uri? = null
+
 
     private val _videoItemsStateFlow = localMediaProvider.getMediaVideosFlow().stateIn(
         viewModelScope,
@@ -99,6 +106,8 @@ class MainViewModel(
     private fun loadFolders() {
 
     }
+
+    // Centralized MinimizedPlayerState
 
 
 

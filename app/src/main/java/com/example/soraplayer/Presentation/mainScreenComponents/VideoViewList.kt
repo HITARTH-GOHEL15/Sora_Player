@@ -41,6 +41,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -63,14 +64,20 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.util.UnstableApi
 import com.example.soraplayer.MainScreen.MainViewModel
 import com.example.soraplayer.Model.VideoItem
+import com.example.soraplayer.MusicPlayer.MusicPlayerBottomBar
+import com.example.soraplayer.MusicPlayer.MusicPlayerViewModel
+import com.example.soraplayer.Player.PlayerBottomBar
+import com.example.soraplayer.Player.PlayerViewModel
 import com.example.soraplayer.Utils.toHhMmSs
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.glide.GlideImage
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun VideoViewList(
@@ -81,26 +88,45 @@ fun VideoViewList(
     onRefresh: () -> Unit,
     scrollState: LazyListState
 ) {
-    Column(
-        modifier = Modifier
+    val viewModel : PlayerViewModel = viewModel(factory = PlayerViewModel.factory)
+    // Scaffold layout with a bottom bar
+    Scaffold(
+        modifier = modifier
             .fillMaxSize()
-    ) {
-        Spacer(modifier = Modifier.padding(16.dp))
-        SwipeRefresh(
-            state = rememberSwipeRefreshState(isRefreshing),
-            onRefresh = onRefresh,
+            .background(color = Color(0xFF222831))
+        ,
+        bottomBar = {
+            // Ensure the music player bottom bar is above the navigation bar
+            PlayerBottomBar(
+                viewModel = viewModel
+            )
+        }
+    ) { innerPadding ->
+        Column(
             modifier = Modifier
+                .background(color = Color(0xFF222831))
                 .fillMaxSize()
+                .padding(top = 12.dp)
         ) {
-            LazyColumn(
-                modifier = modifier.padding(bottom = 8.dp),
-                state = scrollState,
-                verticalArrangement = Arrangement.Center,
+            SwipeRefresh(
+                state = rememberSwipeRefreshState(isRefreshing),
+                onRefresh = onRefresh,
+                modifier = Modifier
+                    .background(color = Color(0xFF222831))
+                    .fillMaxSize()
             ) {
-                items(videoList, key = { it.name }) { videoItem ->
+                LazyColumn(
+                    modifier = modifier,
+                    state = scrollState,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    items(videoList, key = { it.name }) { videoItem ->
                         VideoListItem(
                             videoItem = videoItem,
-                            onItemClick = onVideoItemClick,
+                            onItemClick = {
+                                onVideoItemClick(videoItem)
+                                viewModel.updateCurrentVideoItem(videoItem)
+                                          },
                             videoUri = videoItem.uri,
                         )
                     }
@@ -108,8 +134,10 @@ fun VideoViewList(
             }
         }
     }
+    }
 
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @RequiresApi(Build.VERSION_CODES.Q)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable

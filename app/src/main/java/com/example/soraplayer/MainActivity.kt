@@ -24,15 +24,19 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.soraplayer.MainScreen.MainScreen
 import com.example.soraplayer.MainScreen.MainViewModel
 import com.example.soraplayer.MusicPlayer.MusicPlayerActivity
+import com.example.soraplayer.MusicPlayer.MusicPlayerViewModel
 import com.example.soraplayer.Player.PlayerActivity
+import com.example.soraplayer.Player.PlayerViewModel
 import com.example.soraplayer.Presentation.Common.RequestMediaPermission
 import com.example.soraplayer.ui.theme.SoraPlayerTheme
 import dagger.hilt.android.UnstableApi
 
 
+@androidx.media3.common.util.UnstableApi
 class MainActivity : ComponentActivity() {
 
     private val viewModel by viewModels<MainViewModel>(factoryProducer = { MainViewModel.factory })
+    private val playerViewModel by viewModels<PlayerViewModel>(factoryProducer = { PlayerViewModel.factory })
 
 
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
@@ -50,6 +54,7 @@ class MainActivity : ComponentActivity() {
         }
 
         super.onCreate(savedInstanceState)
+        playerViewModel.loadLastPlayedVideo()
         enableEdgeToEdge()
         setContent {
             SoraPlayerTheme {
@@ -72,20 +77,11 @@ class MainActivity : ComponentActivity() {
                                     }
                                 playerActivityLauncher.launch(playerIntent)
                             },
-                            onMusicItemClick = { musicItem ->
-                                val playerIntent =
-                                    Intent(
-                                        this@MainActivity,
-                                        MusicPlayerActivity::class.java
-                                    ).apply {
-                                        data = musicItem.uri
-                                    }
-                                playerActivityLauncher.launch(playerIntent)
-                            },
                             onPlayStream = { url ->
                                 // Trigger PlayerActivity with the video URL
                                 val intent = Intent(this, PlayerActivity::class.java).apply {
-                                    data = Uri.parse(url)  // Pass the URL to PlayerActivity
+                                    data = Uri.parse(url)
+                                // Pass the URL to PlayerActivity
                                 }
                                 startActivity(intent)
                             },

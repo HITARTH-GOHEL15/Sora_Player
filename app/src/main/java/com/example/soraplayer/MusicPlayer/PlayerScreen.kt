@@ -61,12 +61,13 @@ import kotlinx.coroutines.delay
 @Composable
 fun MusicPlayerScreen(
     viewModel: MusicPlayerViewModel,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
 ) {
     val musicPlayerState by viewModel.musicPlayerState.collectAsState()
     var showControls by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
+
 
     LaunchedEffect(showControls) {
         if (showControls) {

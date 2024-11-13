@@ -15,7 +15,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import android.content.Context
 import android.content.SharedPreferences
+import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.ui.platform.LocalContext
 import com.example.soraplayer.ui.theme.poppins
 
 @Composable
@@ -27,6 +29,8 @@ fun NetworkStreamScreen(
     var url by remember { mutableStateOf("") }
 
     val recentUrls = remember { mutableStateListOf<String>() }
+
+    val context = LocalContext.current
 
     // Load recent URLs initially
     LaunchedEffect(Unit) {
@@ -70,6 +74,8 @@ fun NetworkStreamScreen(
                     recentUrlManager.saveUrl(url) // Save the URL to SharedPreferences
                     recentUrls.clear() // Refresh the recent URLs list
                     recentUrls.addAll(recentUrlManager.getRecentUrls())
+                } else {
+                    Toast.makeText(context, "Please enter a valid URL", Toast.LENGTH_SHORT).show()
                 }
             },
             modifier = Modifier

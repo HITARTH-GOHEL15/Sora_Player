@@ -9,7 +9,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.WRITE_SETTINGS"
+    <uses-permission
+        android:name="android.permission.WRITE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
 
 
@@ -44,7 +45,7 @@
             android:exported="true"
             android:configChanges="orientation|screenSize"
             android:screenOrientation="fullSensor"
-        android:launchMode="singleTask"
+            android:launchMode="singleTask"
             tools:ignore="DiscouragedApi">
 
             <intent-filter>
@@ -89,7 +90,16 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data android:scheme="https" />
-                <data android:scheme="http"/>
+                <data android:host="sora-player.web.app" />
+                <data android:pathPrefix="/play" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
                 <data android:host="sora-player.web.app" />
                 <data android:pathPrefix="/play" />
             </intent-filter>
@@ -131,7 +141,16 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data android:scheme="https" />
-                <data android:scheme="http"/>
+                <data android:host="sora-player.web.app" />
+                <data android:pathPrefix="/play-music" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
                 <data android:host="sora-player.web.app" />
                 <data android:pathPrefix="/play-music" />
             </intent-filter>
@@ -140,7 +159,7 @@
         <service
             android:name=".MusicPlayer.MusicService.MusicService"
             android:foregroundServiceType="mediaPlayback"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.media3.session.MediaSessionService" />
             </intent-filter>

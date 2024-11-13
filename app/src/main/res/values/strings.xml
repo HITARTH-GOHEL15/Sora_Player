@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Sora Player</string>
+    <string name="default_title">Untitled Video</string>
     <string name="videos_layout">Videos</string>
     <string name="folders_layout">Folders</string>
     <string name="rotate_screen">Rotate Screen</string>

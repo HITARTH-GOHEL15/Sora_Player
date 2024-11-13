@@ -1,55 +1,91 @@
 package com.example.soraplayer.Presentation.mainScreenComponents
 
-import androidx.compose.runtime.Composable
-
-import androidx.compose.foundation.Image
+import android.content.Intent
+import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.util.UnstableApi
 import coil.compose.AsyncImage
 import com.example.soraplayer.Model.MusicItem
+import com.example.soraplayer.MusicPlayer.MusicPlayerActivity
+import com.example.soraplayer.MusicPlayer.MusicPlayerBottomBar
+import com.example.soraplayer.MusicPlayer.MusicPlayerScreen
+import com.example.soraplayer.MusicPlayer.MusicPlayerViewModel
 import com.example.soraplayer.R
 
+@OptIn(UnstableApi::class)
 @Composable
 fun MusicGrid(
     musicTracks: List<MusicItem>,
-    onItemClick: (MusicItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LazyVerticalGrid(
+    val viewModel : MusicPlayerViewModel = viewModel(factory = MusicPlayerViewModel.factory)
+    // Scaffold layout with a bottom bar
+    Scaffold(
         modifier = modifier
-            .fillMaxSize()
-            .padding(top = 105.dp),
-        columns = GridCells.Fixed(2)
-    ) {
-        items(musicTracks) { musicItem ->
-            MusicItemColumn(musicItem = musicItem, onItemClick = onItemClick)
+            .background(color = Color(0xFF222831))
+            .fillMaxSize(),
+        bottomBar = {
+            // Ensure the music player bottom bar is above the navigation bar
+            MusicPlayerBottomBar(
+                viewModel = viewModel,
+            )
+        }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding) // Use innerPadding to prevent overlap with bottom bar
+                .background(Color(0xFF222831)) // Background color for the grid
+        ) {
+            // Adjust the bottom padding to ensure the grid does not overlap with the bottom bar
+            Column(
+                modifier = Modifier
+                    .fillMaxSize() // Adjust this padding as per the height of your bottom navigation bar
+            ) {
+                // Music Grid
+                LazyVerticalGrid(
+                    modifier = Modifier
+                        .fillMaxSize(), // Ensure it doesn't overlap with the navigation
+                    columns = GridCells.Fixed(2)
+                ) {
+                    items(musicTracks) { musicItem ->
+                        MusicItemColumn(musicItem = musicItem, onItemClick = { item ->
+                            viewModel.updateCurrentTrack(item) // Update current track in ViewModel
+                        })
+                    }
+                }
+            }
         }
     }
 }

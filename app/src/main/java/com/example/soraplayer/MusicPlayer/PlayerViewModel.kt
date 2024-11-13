@@ -1,8 +1,15 @@
 package com.example.soraplayer.MusicPlayer
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.media.MediaMetadataRetriever
 import android.net.Uri
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
@@ -11,24 +18,24 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.session.MediaSession
 import com.example.soraplayer.Data.LocalMusicProvider
 import com.example.soraplayer.Model.MusicItem
 import com.example.soraplayer.MusicPlayer.MusicService.MusicService
 import com.example.soraplayer.MusicPlayer.MusicService.MusicServiceHandler
 import com.example.soraplayer.MyApplication
-import com.example.soraplayer.Utils.HomeUIState
 import com.example.soraplayer.Utils.MediaStateEvents
 import com.example.soraplayer.Utils.MusicStates
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
 
 @UnstableApi
 class MusicPlayerViewModel(
@@ -42,12 +49,30 @@ class MusicPlayerViewModel(
     val musicPlayerState = _musicPlayerState.asStateFlow()
 
 
-
     init {
         player.prepare()
         observeMusicStates()
         fetchMusic()
+        startPositionUpdater()
+    }
 
+    @SuppressLint("DefaultLocale")
+    fun formatPosition(position: Long): String {
+        val totalSeconds = position / 1000
+        val minutes = totalSeconds / 60
+        val seconds = totalSeconds % 60
+        return String.format("%02d:%02d", minutes, seconds)
+    }
+
+
+    // Function to start a coroutine that updates current position at regular intervals
+    private fun startPositionUpdater() {
+        viewModelScope.launch {
+            while (true) {
+                updateCurrentPosition(player.currentPosition)
+                delay(1000) // Update every second
+            }
+        }
     }
 
     override fun onCleared() {
@@ -66,17 +91,43 @@ class MusicPlayerViewModel(
         }
     }
 
-    private fun updateCurrentTrack(trackItem: MusicItem) {
+
+
+
+
+
+
+
+
+    fun updateCurrentTrack(trackItem: MusicItem) {
         _musicPlayerState.update { state ->
-            state.copy(currentTrack = trackItem)
+            state.copy(
+                currentTrack = trackItem,
+                currentTrackIndex = state.musicItems.indexOf(trackItem),
+                duration = player.duration,
+                currentPosition = player.currentPosition,
+                isPlaying = true
+            )
         }
         setMediaItem(trackItem.uri)
+
+        startForegroundService()
+
     }
 
-    private fun setMediaItem(uri: Uri) {
+    // Update position in the view model state whenever the player position changes
+    fun updateCurrentPosition(position: Long) {
+        _musicPlayerState.update { state ->
+            state.copy(currentPosition = position)
+        }
+    }
+
+
+    fun setMediaItem(uri: Uri) {
         player.apply {
             clearMediaItems()
             addMediaItem(MediaItem.fromUri(uri))
+            duration
             playWhenReady = true
             prepare()
         }
@@ -101,10 +152,10 @@ class MusicPlayerViewModel(
                         }
                     }
                     is MusicStates.MediaReady -> {
+
                         _musicPlayerState.update { state ->
                             state.copy(
                                 isBuffering = false,
-                                duration = musicState.duration
                             )
                         }
                     }
@@ -112,6 +163,7 @@ class MusicPlayerViewModel(
                         _musicPlayerState.update { state ->
                             state.copy(isPlaying = musicState.isPlaying)
                         }
+
                     }
                     is MusicStates.CurrentMediaPlaying -> {
                         // Update current track index or related UI
@@ -132,6 +184,14 @@ class MusicPlayerViewModel(
             }
         }
     }
+
+    fun startForegroundService() {
+        val serviceIntent = Intent(context, MusicService::class.java).apply {
+            action = "ACTION_START_FOREGROUND"
+        }
+        context.startService(serviceIntent)
+    }
+
 
 
     fun onPlayPauseClick() {
@@ -154,11 +214,16 @@ class MusicPlayerViewModel(
 
 
     fun playPauseOnActivityLifeCycleEvents(shouldPause: Boolean) {
-        viewModelScope.launch {
-            val event = if (shouldPause) MediaStateEvents.Stop else MediaStateEvents.PlayPause
-            musicServiceHandler.onMediaStateEvents(event)
+        if (shouldPause) {
+            viewModelScope.launch {
+                musicServiceHandler.onMediaStateEvents(MediaStateEvents.Stop)
+            }
+        } else {
+            // No need to stop the music when app is backgrounded
+            startForegroundService()
         }
     }
+
 
     fun onIntent(uri: Uri) {
         // Check if it's a local music file or a URL
@@ -190,9 +255,9 @@ class MusicPlayerViewModel(
         }
     }
 
-
-
-
+    fun setPlaybackPosition(playbackPosition: Long) {
+        player.seekTo(playbackPosition.toInt().toLong())
+    }
 
 
     companion object {
@@ -226,6 +291,10 @@ class MusicPlayerViewModel(
     }
 }
 
+
+
+
+
 data class MusicPlayerState(
     val musicItems: List<MusicItem> = emptyList(),
     val currentTrack: MusicItem? = null,
@@ -233,5 +302,6 @@ data class MusicPlayerState(
     val isBuffering: Boolean = false,
     val duration: Long = 0L,
     val currentPosition: Long = 0L,
-    val currentTrackIndex: Int = -1
+    val currentTrackIndex: Int = -1,
+    val artwork: Bitmap? = null  // Add this field to store the artwork URI
 )

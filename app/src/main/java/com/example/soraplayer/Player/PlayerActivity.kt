@@ -1,6 +1,6 @@
 package com.example.soraplayer.Player
 
-import android.app.Activity
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
@@ -21,13 +21,11 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.common.util.UnstableApi
-import com.example.soraplayer.MainScreen.MainViewModel
 import com.example.soraplayer.ui.theme.SoraPlayerTheme
 
 @UnstableApi
@@ -35,9 +33,15 @@ class PlayerActivity: ComponentActivity() {
 
     private val playerViewModel by viewModels<PlayerViewModel>(factoryProducer = { PlayerViewModel.factory })
 
+    private lateinit var sensorManager: SensorManager
+    private lateinit var orientationSensor: Sensor
+
+    @SuppressLint("NewApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         handleWindowInsetsAndDecors(window = window)
         super.onCreate(savedInstanceState)
+
+        handleWindowInsetsAndDecors(window)
 
         requestedOrientation = playerViewModel.playerState.value.orientation
 
@@ -45,6 +49,9 @@ class PlayerActivity: ComponentActivity() {
 
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         orientationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)!!
+
+
+
 
         setContent {
             SoraPlayerTheme(
@@ -56,7 +63,7 @@ class PlayerActivity: ComponentActivity() {
                         onRotateScreenClick = {
                             playerViewModel.onRotateScreen()
                             requestedOrientation = playerViewModel.playerState.value.orientation
-                                              },
+                        },
                         onBackClick = { finish() },
                         activity = this
                     )
@@ -74,6 +81,7 @@ class PlayerActivity: ComponentActivity() {
 
     private fun handleIntent(intent: Intent?) {
         val intentUri = intent?.data
+        val position = intent?.getLongExtra("CURRENT_POSITION", 0L) ?: 0L
 
         // Handle deep link
         if (intentUri != null) {
@@ -85,10 +93,12 @@ class PlayerActivity: ComponentActivity() {
         if (intent?.action == Intent.ACTION_SEND) {
             handleShareIntent(intent)
         }
-        // Check if the intent contains a URL and pass it to the player
-        if (intentUri != null) {
-            playerViewModel.onIntent(intentUri)
+
+        if(position > 0) {
+            playerViewModel.setPlaybackPosition(position)
+
         }
+
     }
 
     private fun handleDeepLink(uri: Uri?) {
@@ -109,16 +119,16 @@ class PlayerActivity: ComponentActivity() {
         }
     }
 
-      private  fun handleAndroidAppLink(uri: Uri?) {
-            val videoUrl = uri?.getQueryParameter("video_url") // Correctly extract the 'video_url' parameter
+    private  fun handleAndroidAppLink(uri: Uri?) {
+        val videoUrl = uri?.getQueryParameter("video_url") // Correctly extract the 'video_url' parameter
 
-            if (videoUrl != null) {
-                val videoUri = Uri.parse(videoUrl)
-                playerViewModel.onIntent(videoUri) // Pass the video URL to the player
-            } else {
-                Log.e(TAG, "Video URL is missing in the deep link")
-            }
+        if (videoUrl != null) {
+            val videoUri = Uri.parse(videoUrl)
+            playerViewModel.onIntent(videoUri) // Pass the video URL to the player
+        } else {
+            Log.e(TAG, "Video URL is missing in the deep link")
         }
+    }
 
 
     private fun handleShareIntent(intent: Intent?) {
@@ -163,8 +173,6 @@ class PlayerActivity: ComponentActivity() {
         requestedOrientation = orientation
     }
 
-    private lateinit var sensorManager: SensorManager
-    private lateinit var orientationSensor: Sensor
     private val orientationListener = object : SensorEventListener {
         override fun onSensorChanged(event: SensorEvent) {
             if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
@@ -194,19 +202,17 @@ class PlayerActivity: ComponentActivity() {
 
 
 
-
-
     override fun onPause() {
         playerViewModel.playPauseOnActivityLifeCycleEvents(shouldPause = true)
         super.onPause()
         sensorManager.unregisterListener(orientationListener)
+
     }
 
     override fun onResume() {
         playerViewModel.playPauseOnActivityLifeCycleEvents(shouldPause = false)
         super.onResume()
         sensorManager.registerListener(orientationListener, orientationSensor, SensorManager.SENSOR_DELAY_NORMAL)
-
     }
 
     companion object {

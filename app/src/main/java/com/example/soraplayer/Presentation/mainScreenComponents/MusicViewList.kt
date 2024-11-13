@@ -15,11 +15,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,28 +34,61 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.util.UnstableApi
 import coil.compose.AsyncImage
 import com.example.soraplayer.Model.MusicItem
+import com.example.soraplayer.MusicPlayer.MusicPlayerBottomBar
+import com.example.soraplayer.MusicPlayer.MusicPlayerViewModel
 import com.example.soraplayer.R
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.InternalLandscapistApi
 import com.skydoves.landscapist.glide.GlideImage
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun MusicList(
     musicTracks: List<MusicItem>,
-    onItemClick: (MusicItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(
+    val viewModel : MusicPlayerViewModel = viewModel(factory = MusicPlayerViewModel.factory)
+    // Scaffold layout with a bottom bar
+    Scaffold(
         modifier = modifier
-            .fillMaxSize()
-            .padding(top = 105.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        items(musicTracks) { musicItem ->
-            MusicItemRow(musicItem = musicItem, onItemClick = onItemClick)
+            .background(color = Color(0xFF222831))
+            .fillMaxSize(),
+        bottomBar = {
+            // Ensure the music player bottom bar is above the navigation bar
+            MusicPlayerBottomBar(
+                viewModel = viewModel,
+            )
+        }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding) // Use innerPadding to prevent overlap with bottom bar
+                .background(Color(0xFF222831)) // Background color for the grid
+        ) {
+            // Adjust the bottom padding to ensure the grid does not overlap with the bottom bar
+            Row(
+                modifier = Modifier
+                    .fillMaxSize() // Adjust this padding as per the height of your bottom navigation bar
+            ) {
+                // Music Grid
+                LazyColumn(
+                    modifier = modifier
+                        .fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(musicTracks) { musicItem ->
+                        MusicItemRow(musicItem = musicItem, onItemClick = { item ->
+                            viewModel.updateCurrentTrack(item) // Update current track in ViewModel
+                        })
+                    }
+                }
+            }
         }
     }
 }

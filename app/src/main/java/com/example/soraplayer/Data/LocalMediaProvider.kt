@@ -3,13 +3,15 @@ package com.example.soraplayer.Data
 import android.app.Application
 import android.content.ContentUris
 import android.database.ContentObserver
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.util.Log
 import androidx.core.database.getStringOrNull
-import com.example.soraplayer.Model.FolderItem
 import com.example.soraplayer.Model.VideoItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -97,12 +99,6 @@ class LocalMediaProvider(
                 val id = cursor.getLong(idColumn)
                 val absolutePath = cursor.getString(dataColumn)
                 val name = absolutePath.split("/").lastOrNull().toString()
-                val datataken = cursor.getLong(dateTakenColumn)
-                val duration = cursor.getLong(durationColumn)
-                val uri = ContentUris.withAppendedId(VIDEO_COLLECTION_URI, id)
-                val width = cursor.getInt(widthColumn)
-                val height = cursor.getInt(heightColumn)
-                val size = cursor.getLong(sizeColumn)
 
                 // Format date in "date/month/year" format
                 // Retrieve and format the date
@@ -113,6 +109,10 @@ class LocalMediaProvider(
                     dateModified > 0 -> dateFormat.format(dateModified * 1000L) // dateModified is in seconds
                     else -> "Unknown" // Fallback if no date is available
                 }
+                val  uri = ContentUris.withAppendedId(
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                    id
+                )
                 videoItems.add(
                     VideoItem(
                         id = id,
@@ -124,8 +124,7 @@ class LocalMediaProvider(
                         height = cursor.getInt(heightColumn),
                         size = cursor.getLong(sizeColumn),
                         dateModified = cursor.getLong(dateModifiedColumn),
-                        date = date
-                        
+                        date = date,
                     )
                 )
             }

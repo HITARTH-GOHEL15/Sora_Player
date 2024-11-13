@@ -24,7 +24,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
@@ -46,6 +48,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -62,6 +65,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.motionEventSpy
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
@@ -69,9 +73,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.util.UnstableApi
 import com.example.soraplayer.MainScreen.LayoutChange
 import com.example.soraplayer.MainScreen.MainViewModel
 import com.example.soraplayer.Model.VideoItem
+import com.example.soraplayer.Player.PlayerBottomBar
+import com.example.soraplayer.Player.PlayerViewModel
 import com.example.soraplayer.Utils.toHhMmSs
 import com.example.soraplayer.ui.theme.poppins
 import com.google.accompanist.swiperefresh.SwipeRefresh
@@ -79,6 +86,7 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.glide.GlideImage
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun VideoItemGridLayout(
@@ -89,36 +97,64 @@ fun VideoItemGridLayout(
     onRefresh: () -> Unit,
     scrollState: LazyStaggeredGridState
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        Spacer(modifier = Modifier.padding(16.dp))
-        SwipeRefresh(
-            state = rememberSwipeRefreshState(isRefreshing),
-            onRefresh = onRefresh,
+
+    val viewModel : PlayerViewModel = viewModel(factory = PlayerViewModel.factory)
+    // Scaffold layout with a bottom bar
+    Scaffold(
+        modifier = modifier
+            .background(color = Color(0xFF222831))
+            .fillMaxSize(),
+        bottomBar = {
+            // Ensure the music player bottom bar is above the navigation bar
+            PlayerBottomBar(
+                viewModel = viewModel
+            )
+        }
+    ) { innerPadding ->
+        Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(innerPadding)
         ) {
-                LazyVerticalStaggeredGrid(
-                    modifier = modifier,
-                    state = scrollState,
-                    horizontalArrangement = Arrangement.Center,
-                    columns = StaggeredGridCells.Fixed(2)
+            SwipeRefresh(
+                state = rememberSwipeRefreshState(isRefreshing),
+                onRefresh = onRefresh,
+                modifier = Modifier
+                    .padding(top = 30.dp)
+                    .fillMaxSize()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
                 ) {
-                    items(videoList, key = { it.name }) { videoItem ->
-                        VideoGridItem(
-                            videoItem = videoItem,
-                            onItemClick = onVideoItemClick,
-                            modifier = Modifier.padding(6.dp),
-                            videoUri = videoItem.uri
-                        )
-                    }
+                    SwipeRefresh(
+                        state = rememberSwipeRefreshState(isRefreshing),
+                        onRefresh = onRefresh,
+                        modifier = Modifier
+                            .fillMaxSize()
+                    ) {
+                        LazyVerticalStaggeredGrid(
+                            modifier = modifier,
+                            state = scrollState,
+                            horizontalArrangement = Arrangement.Center,
+                            columns = StaggeredGridCells.Fixed(2)
+                        ) {
+                            items(videoList, key = { it.name }) { videoItem ->
+                                VideoGridItem(
+                                    videoItem = videoItem,
+                                    onItemClick = onVideoItemClick,
+                                    modifier = Modifier.padding(6.dp),
+                                    videoUri = videoItem.uri
+                                )
+                            }
 
+                        }
+                    }
                 }
             }
         }
     }
+}
 
 
 @RequiresApi(Build.VERSION_CODES.Q)

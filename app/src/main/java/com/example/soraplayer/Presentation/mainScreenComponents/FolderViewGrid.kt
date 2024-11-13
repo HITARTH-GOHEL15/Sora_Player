@@ -2,6 +2,7 @@ package com.example.soraplayer.Presentation.mainScreenComponents
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Icon
@@ -47,7 +49,6 @@ fun FolderItemGridLayout(
 ) {
     Column(
         modifier = modifier
-            .fillMaxSize()
     ) {
         Spacer(modifier = Modifier.padding(10.dp))
         SwipeRefresh(

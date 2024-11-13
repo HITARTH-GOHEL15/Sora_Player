@@ -3,6 +3,7 @@ accompanistPermissions = "0.28.0"
 accompanistSwiperefresh = "<latest-version>"
 accompanistSwiperefreshVersion = "0.27.0"
 agp = "8.8.0-alpha08"
+audienceNetworkSdk = "6.18.0"
 coilCompose = "2.0.0"
 coilComposeVersion = "2.1.0"
 compiler = "4.15.1"
@@ -29,9 +30,11 @@ composeBom = "2024.06.00"
 media3Exoplayer = "1.4.0"
 media3ExoplayerHls = "1.4.1"
 medialibrary = "0.9.10"
+playServicesAds = "23.5.0"
 retrofit = "2.9.0"
 runtimeLivedata = "1.6.8"
 appcompat = "1.7.0"
+unityAds = "4.12.4"
 vlcAndroidSdk = "3.4.6"
 
 [libraries]
@@ -47,6 +50,7 @@ androidx-media3-exoplayer-dash = { module = "androidx.media3:media3-exoplayer-da
 androidx-media3-exoplayer-hls = { module = "androidx.media3:media3-exoplayer-hls", version.ref = "media3ExoplayerHls" }
 androidx-media3-session = { module = "androidx.media3:media3-session", version.ref = "media3Exoplayer" }
 androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3Exoplayer" }
+audience-network-sdk = { module = "com.facebook.android:audience-network-sdk", version.ref = "audienceNetworkSdk" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 coil-compose-v210 = { module = "io.coil-kt:coil-compose", version.ref = "coilComposeVersion" }
 compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "compiler" }
@@ -78,7 +82,9 @@ libvlc-all = { module = "org.videolan.android:libvlc-all", version.ref = "libvlc
 androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 medialibrary = { module = "org.videolan.android:medialibrary", version.ref = "medialibrary" }
+play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+unity-ads = { module = "com.unity3d.ads:unity-ads", version.ref = "unityAds" }
 vlc-android-sdk = { module = "org.videolan.android:vlc-android-sdk", version.ref = "vlcAndroidSdk" }
 
 [plugins]

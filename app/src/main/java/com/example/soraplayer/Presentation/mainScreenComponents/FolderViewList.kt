@@ -1,5 +1,6 @@
 package com.example.soraplayer.Presentation.mainScreenComponents
 
+import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -40,6 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.util.UnstableApi
 import com.example.soraplayer.MainScreen.MainViewModel
 import com.example.soraplayer.Model.FolderItem
 import com.example.soraplayer.R
@@ -68,13 +70,13 @@ fun FolderItemListLayout(
             LazyColumn(
                 modifier = modifier
                     .padding(bottom = 4.dp),
-                verticalArrangement = Arrangement.Center,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(foldersList, key = { it.name }) { folderItem ->
                     FolderListItem(
                         folderItem = folderItem,
                         onItemClick = onFolderItemClick,
-                        modifier = Modifier
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
 
@@ -83,6 +85,7 @@ fun FolderItemListLayout(
     }
 }
 
+@OptIn(UnstableApi::class)
 @Composable
 private fun FolderListItem(
     folderItem: FolderItem,
